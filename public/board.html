@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html ng-app="board">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css">
+  <link rel="stylesheet" href="board.css" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Saira+Semi+Condensed:200,400,800" rel="stylesheet">
+  <style>
+    .saira-800 {
+      font-family: 'Saira Semi Condensed';
+      font-weight: 800;
+    }
+
+    .saira-400 {
+      font-family: 'Saira Semi Condensed';
+      font-weight: 400;
+    }
+
+    .saira-200 {
+      font-family: 'Saira Semi Condensed';
+      font-weight: 200;
+    }
+
+    .fail {
+      background-color: danger;
+      color: light;
+    }
+
+    .pass {
+      background-color: danger;
+      color: light;
+    }
+    .avalon {
+      font-family: 'Saira Semi Condensed';
+      font-weight: 800;
+      margin-bottom: -20px;
+    }
+    .pointer {cursor: pointer; }
+  </style>
+  <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="http://code.angularjs.org/1.2.13/angular.js"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/animejs/2.0.2/anime.js'></script>
+  <script src="angular-ui-router.min.js"></script>
+  <script src="socket.min.js"></script>
+  <script src="board.js"></script>
+</head>
+
+<body class="bg-dark" ng-controller="Main">
+  <div class="py-5 gradient-overlay" >
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6 m-0 p-0" id="book" ng-hide="started">
+          <div class="card">
+            <div class=" px-5 py-2">
+              <div class="row">
+                <div class="col-md-12 px-0">
+                  <h1 class="text-center text-md-left display-3 saira-800 py-2 avalon">AVALON</h1>
+                  <h2 class="text-center text-md-left">Game Board</h2>
+                </div>
+              </div>
+              <form class="py-3 row">
+                 <div class="form-group col-md-12 col-lg-8 px-0 my-0">
+                  <h3 class="saira-200">Number of players</h3>
+                  <ul class="pagination my-0">
+                    <li class="page-item">
+                      <p class="page-link my-0 pointer" ng-class="{'bg-dark text-white':nplayers == 5, 'text-dark':nplayers != 5}"  ng-click="nplayers=5">5</p>
+                    </li>
+                    <li class="page-item">
+                      <p class="page-link my-0 pointer" ng-class="{'bg-dark text-white': nplayers == 6, 'text-dark':nplayers != 6}"  ng-click="nplayers=6">6</p>
+                    </li>
+                    <li class="page-item">
+                      <p class="page-link my-0 pointer" ng-class="{'bg-dark text-white':nplayers == 7, 'text-dark':nplayers != 7}"  ng-click="nplayers=7">7</p>
+                    </li>
+                    <li class="page-item">
+                      <p class="page-link my-0 pointer" ng-class="{'bg-dark text-white':nplayers == 8, 'text-dark':nplayers != 8}"  ng-click="nplayers=8">8</p>
+                    </li>
+                    <li class="page-item">
+                      <p class="page-link my-0 pointer" ng-class="{'bg-dark text-white':nplayers == 9, 'text-dark':nplayers != 9}"  ng-click="nplayers=9">9</p>
+                    </li>
+                    <li class="page-item">
+                      <p class="page-link my-0 pointer" ng-class="{'bg-dark text-white':nplayers == 10, 'text-dark':nplayers != 10}"  ng-click="nplayers=10">10</p>
+                    </li>
+                  </ul>
+                </div>
+                <div class="form-group col-md-12 col-lg-4 px-0">
+                  <h3 class="saira-200">Game Room</h3>
+                  <h1 class="avalon">{{room}}<button class="bg-light btn"><span class="fa fa-refresh fa-lg" ng-click="newroom()"></span></button></h1><!--<input class="form-control" type="number" placeholder="5998" ng-model="room">-->
+                  </div>
+                <div class="form-group col-md-12 px-0 py-3">
+                  <p class="saira-200" ng-hide="nplayers<5">This game will have <b class="saira-800">{{split(nplayers)[1]}}</b> Loyal Servants of Arthur and <b class="saira-800">{{split(nplayers)[0]}}</b> Agents of Evil.</p>
+                  <h3 class="saira-200">Special Characters</h3>
+                  <ul id="c_listgroup" class="list-group pi-draggable" draggable="true">
+                    <li class="list-group-item pointer" ng-class="{'bg-dark text-white': chars.indexOf('Merlin') > -1, 'disabled':nplayers<5}" ng-click="select('Merlin')">Merlin</li>
+                    <li class="list-group-item pointer" ng-class="{'bg-dark text-white': chars.indexOf('Assassin') > -1, 'disabled':nplayers<5}" ng-click="select('Assassin')">Assassin</li>
+                    <li class="list-group-item list-group-item-action pointer" ng-class="{'bg-dark text-white': chars.indexOf('Percival') > -1, 'disabled':nplayers<5}" ng-click="select('Percival')">Percival</li>
+                    <li class="list-group-item list-group-item-action pointer" ng-class="{'bg-dark text-white': chars.indexOf('Oberon') > -1, 'disabled':nplayers<5}" ng-click="select('Oberon')">Oberon</li>
+                    <li class="list-group-item list-group-item-action pointer" ng-class="{'bg-dark text-white': chars.indexOf('Morgana') > -1, 'disabled':nplayers<5}" ng-click="select('Morgana')">Morgana</li>
+                    <li class="list-group-item list-group-item-action pointer" ng-class="{'bg-dark text-white': chars.indexOf('Mordred') > -1, 'disabled':nplayers<5}" ng-click="select('Mordred')">Mordred</li>
+                  </ul>
+                </div>
+                <button ng-click="startgame()" class="btn mt-2 btn-outline-dark btn-block saira-200" ng-disabled="njoinedplayers()!=nplayers" ng-class="{'text-white bg-accept pointer':njoinedplayers()==nplayers}">Start Game</button>
+                  <p class="saira-200" ng-show="njoinedplayers()>nplayers">Too many players, select the right number of players. If this is unintentional, please try a new room.</p>
+                  <p class="saira-200" ng-show="njoinedplayers()<nplayers"> Wating for all players have join...</p>
+                
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2 bg-light text-dark" id="book">
+          <div class="row">
+            <div class="col-md-12 border" ng-class="{'bg-info text-dark':player.selected, 'bg-dark text-white':player.mission}" ng-repeat="(pid, player) in players" >
+              <div class="row">
+                <div class="col-md-9">
+                    <p class="lead m-0 saira-800">P{{$index + 1}} <i class="fa fa-dot-circle-o" ng-show="player.leader"></i></p>
+                    <h4 class="saira-200">{{player.nickname}} </h4>
+                </div>
+                <div class="col-md-3" ng-class="{'bg-reject':player.vote==0, 'bg-accept':player.vote==1}"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-10 bg-light text-dark p-3" ng-show="started">
+          <div class="card text-center">
+            <div class="card-header text-left py-1">Now</div>
+            <div class="card-body p-2">
+              <div class="row">
+                <div class="col-md-6 p-3">
+                  <h4 class="saira-400"><b><span style="font-weight: normal;"><b>{{phasetext[now.phase].title}}</b></span>
+                    </b>
+                  </h4>
+                  <p class="saira-200" ng-show="now.phase=='leader'">Pick <span class="saira-800">{{pls}}</span> Avalonians for this quest.</p>
+                  <p class="saira-200" ng-show="now.phase=='vote'">Do you agree to send the following Avalonians on this quest?</p>
+                  <p class="saira-200" ng-show="now.phase=='mission'">May the Fates be in our favor... Farewell soldiers!</p>
+                  <h4 class="text-muted saira-200">{{now.selplayers.join(', ')}}</h4>
+                </div>
+                <div class="col-md-6 ">
+                  <p class="p-y-1 text-left p-3 m-0 saira-200">{{phasetext[now.phase].message}}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row pi-draggable py-5 px-3" id="c_row-2col-a">
+            <div class="col-md-2 text-center border py-3 px-2">
+              <h3 class="p-0 text-center saira-200 m-0"> Missions </h3>
+              <p class="p-0 m-0 saira-200">3 to win!</p>
+            </div>
+            <div class="col-md-2 text-center border" ng-class="{'fail bg-danger text-white': score[0]==0, 'bg-success text-white': score[0]==1}">
+              <h1 class="saira-800 py-4 m-0">1</h1>
+            </div>
+            <div class="col-md-2 text-center border" ng-class="{'fail bg-danger text-white': score[1]==0, 'bg-success text-white': score[1]==1}">
+              <h1 class="saira-800 py-4 m-0">2</h1>
+            </div>
+            <div class="col-md-2 text-center border" ng-class="{'fail bg-danger text-white': score[2]==0, 'bg-success text-white': score[2]==1}">
+              <h1 class="saira-800 py-4 m-0">3</h1>
+            </div>
+            <div class="col-md-2 text-center border" ng-class="{'fail bg-danger text-white': score[3]==0, 'bg-success text-white': score[3]==1}">
+              <h1 class="saira-800 py-4 m-0">4</h1>
+            </div>
+            <div class="col-md-2 text-center border" ng-class="{'fail bg-danger text-white': score[4]==0, 'bg-success text-white': score[4]==1}">
+              <h1 class="saira-800 py-4 m-0">5</h1>
+            </div>
+          </div>
+          <div class="row pi-draggable px-3" id="c_row-2col-a">
+            <div class="col-md-2 text-center border py-2 px-2">
+              <h6 class="p-0 text-center m-0 saira-200">Failed Votes</h6>
+            </div>
+            <div class="col-md-1 text-center border" ng-class="{'bg-dark text-white': fvotes==1}">
+              <h3 class="saira-200 py-2 m-0">1</h3>
+            </div>
+            <div class="col-md-1 text-center border" ng-class="{'bg-dark text-white': fvotes==2}">
+              <h3 class="saira-200 py-2 m-0">2</h3>
+            </div>
+            <div class="col-md-1 text-center border" ng-class="{'bg-dark text-white': fvotes==3}">
+              <h3 class="saira-200 py-2 m-0">3</h3>
+            </div>
+            <div class="col-md-1 text-center border" ng-class="{'bg-dark text-white': fvotes==4}">
+              <h3 class="saira-200 py-2 m-0">4</h3>
+            </div>
+            <div class="col-md-5 text-center border bg-danger text-white">
+              <div class="container">
+                <div class="row">
+                  <h3 class="col-md-2 saira-800 py-2 m-0">5</h3>
+                  <p class="col-md-8 m-0">Time has run out, the mission failed...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="c_card" class="card pi-draggable my-4" draggable="true">
+            <div class="card-header py-1"> About Game</div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h4 class="saira-200">Characters this game</h4>
+                  <h6 class="saira-200 text-success">{{gchars.join(', ')}} and [{{knights}}] Knights of Arthur</h6>
+                  <h6 class="saira-200 text-danger">{{bchars.join(', ')}} <span ng-hide="minions==0">and [{{minions}}] Minions of Mordred</span></h6>
+                </div>
+                <div class="col-md-6">
+                  <h4 class="saira-200">Active Expansions</h4>
+                  <h6 class="saira-200">{{expansions}}</h6>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+</body>
+
+</html>

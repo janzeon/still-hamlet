@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html ng-app="player" >
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css">
+  <link rel="stylesheet" href="playerconsole.css" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Saira+Semi+Condensed:200,400,800" rel="stylesheet">
+  <style>
+    .avalon {
+      font-family: 'Saira Semi Condensed';
+      font-weight: 800;
+      margin-bottom: -20px;
+    }
+  </style>
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="http://code.angularjs.org/1.2.13/angular.js"></script>
+  <script src="angular-ui-router.min.js"></script>
+  <script src="socket.min.js"></script>
+  <script src="player.js"></script>
+</head>
+
+<body ng-controller="Main">
+  <!--<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">AVALON</a>
+      <div class="text-center justify-content-end" id="navbar2SupportedContent">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="#">Intel</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+    THIS IS WHERE WE WILL INJECT OUR CONTENT ============================== -->
+  
+  <div ui-view></div>
+    
+</body>
+
+    
+</html>
+
+<script>
+      $(function () {
+          
+        function generateHash(len) {
+          var symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+          var hash = '';
+          for (var i = 0; i < len; i++) {
+            var symIndex = Math.floor(Math.random() * symbols.length);
+            hash += symbols.charAt(symIndex);
+          }
+          return hash;
+        }
+        if (!/\buser_id=/.test(document.cookie)) { //if no 'user_id' in cookies
+          document.cookie = 'user_id=' + generateHash(32);  //add cookie 'user_id'
+        }
+      });
+</script>

@@ -1,0 +1,43 @@
+
+<style>
+
+.loaddot {
+  width: 4rem;
+  height: 4rem;
+  margin: .5rem;
+  background: #0097A7;
+  position:absolute;
+  top:43vh;
+  left:42vw;
+}
+.message {
+  position:absolute;
+  top:60vh;
+  width:100%;
+  text-align:center;
+  font-size:10px;
+  color:white;
+  font-family: 'Saira Semi Condensed';
+  font-weight: 200;
+}
+
+</style>
+<script>
+var myAnimation = anime({
+  targets: ['.loaddot'],
+  rotate: function() { return anime.random(-180, 180); },
+  borderRadius: '8px',
+  duration: 2000,
+  loop: true,
+  direction: 'alternate',
+});
+</script>
+<div class="bg-dark" style="height:110vh; position:relative;top:-10px; margin:0; overflow:hidden;">
+  <div>
+    
+    <div class="loaddot" style="background: #006064;"></div>
+    <div class="loaddot"></div>
+    <div class="loaddot" style="background: #00ACC1;"></div>
+  </div>
+  <p class="text-center message siara-200" >{{message}}</p>
+</div>

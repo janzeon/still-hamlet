@@ -1,0 +1,74 @@
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+      #messages { margin-bottom: 40px }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+      <input id="r" autocomplete="off" placeholder="roomnumber"/><button>Send</button>
+      <input id="n" autocomplete="off" placeholder="nickname"/><button>Send</button>
+    </form>
+    <button id="leaveroom">Leave</button>
+    <button id="start">Start</button>
+    <button id="alljoined">All joined</button>
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      $(function () {
+          
+        function generateHash(len) {
+          var symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+          var hash = '';
+          for (var i = 0; i < len; i++) {
+            var symIndex = Math.floor(Math.random() * symbols.length);
+            hash += symbols.charAt(symIndex);
+          }
+          return hash;
+        }
+        if (!/\buser_id=/.test(document.cookie)) { //if no 'user_id' in cookies
+          document.cookie = 'user_id=' + generateHash(32);  //add cookie 'user_id'
+        }
+          
+        var socket = io();
+        $('form').submit(function(){
+          console.log("message sent")
+          socket.emit('join', $('#r').val())
+          socket.emit('nickname', $('#n').val());
+          socket.emit('missonstat', $('#m').val());
+          $('#m').val('');
+          $('#n').val('');
+          $("#r").prop('disabled', true);
+          $.get("/submit");
+          return false;
+        });
+         
+        $('#leaveroom').click(function(){
+          console.log("Leaving room")
+          $("#r").prop('disabled', false);
+          socket.emit('leaveroom', "Disconnect from room")
+        }); 
+        $('#start').click(function(){
+          console.log("Starting game in room "+ $('#r').val())
+          socket.emit('startroom', $('#r').val())
+        });
+          
+        socket.on('console', function(msg){
+          $('#messages').append($('<li>').text(msg));
+          window.scrollTo(0, document.body.scrollHeight);
+        });
+      });
+    </script>
+  </body>
+</html>
