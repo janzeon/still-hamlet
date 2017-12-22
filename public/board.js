@@ -2,19 +2,23 @@
 
 
 //assign a unique id to the user in a cookie that can be persistent
-        function generateHash(len) {
-          var symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-          var hash = '';
-          for (var i = 0; i < len; i++) {
-            var symIndex = Math.floor(Math.random() * symbols.length);
-            hash += symbols.charAt(symIndex);
-          }
-          return hash;
-        }
-        if (!/\buser_id=/.test(document.cookie)) { //if no 'user_id' in cookies
-          document.cookie = 'user_id=' + 'board'+generateHash(32);  //add cookie 'user_id'
-        }
-        console.log(document.cookie)
+function generateHash(len) {
+  var symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+  var hash = '';
+  for (var i = 0; i < len; i++) {
+    var symIndex = Math.floor(Math.random() * symbols.length);
+    hash += symbols.charAt(symIndex);
+  }
+  console.log(hash)
+  return hash;
+}
+
+if (!/\buser_id=/.test(document.cookie) || !document.cookie.includes("board")) { //if no 'user_id' in cookies
+  document.cookie = 'user_id=' + 'board'+generateHash(32);  //add cookie 'user_id'
+}
+console.log(document.cookie)
+
+
 
 
 var app = angular.module('board', ['btford.socket-io','ui.router']);
@@ -81,7 +85,9 @@ app.controller('Main', function($scope, bsocket,$http) {
     
     $scope.started=false
     $scope.nplayers=2
-     
+    
+    
+    //starting screen options logic
     $scope.chars=['Merlin','Assassin']
     $scope.gchars=['Merlin']
     $scope.bchars=['Assassin']
@@ -111,13 +117,15 @@ app.controller('Main', function($scope, bsocket,$http) {
         $scope.chars=$scope.gchars.concat($scope.bchars)
     }
     
+    
+    
     $scope.startgame = function(){
         $scope.started=true
         var chars=getroles($scope.chars, $scope.nplayers)
         data={
             "room":String($scope.room),
             "nplayers":$scope.nplayers,
-            "chars":chars,
+            "chars":chars
         }
         console.log(data)
         bsocket.emit("startroom",data)
@@ -125,19 +133,23 @@ app.controller('Main', function($scope, bsocket,$http) {
     
     //gotta fix everything below this comment
     
-    $scope.players={"IDytwu67":{"nickname":"Janardhan", "selected":0, "vote":-1},"IDxtwub67":{"nickname":"Nick", "selected":0,  "vote":-1},"IDxytw67":{"nickname":"Mario", "selected":0,  "vote":-1},"IDxytub67":{"nickname":"Jana", "selected":0,  "vote":-1},"IDxyub67":{"nickname":"Jiby", "selected":0,  "vote":-1},"Dxytub67":{"nickname":"Janard", "selected":0,  "vote":-1},"IDxytub6":{"nickname":"Janar", "selected":0,  "vote":-1},"IDxytub7":{"nickname":"Jan", "selected":0,  "vote":-1}}
+    $scope.players={}
     $scope.njoinedplayers = function(){return Object.keys($scope.players).length}
     
     
     
-    $scope.score=[0,1,0,-1,-1]
-    $scope.fvotes=3
-    $scope.leader="IDytwu67"
+    $scope.score=[-1,-1,-1,-1,-1]
+    $scope.sabotages=[-1,-1,-1,-1,-1]
+    $scope.fvotes=0
+    $scope.leader=""
+    $scope.votest=-1
+    $scope.votesv=0
+    $scope.votesn=0
     
     $scope.expansions="None"
     
-    $scope.now={"phase":"mission", "selplayers":["Janardhan","Mario","Nick"]}
-    $scope.pls=3
+    $scope.now={"phase":"", "selplayers":[]}
+    
     
     
     $http.get('/roomnumber')
@@ -160,4 +172,84 @@ app.controller('Main', function($scope, bsocket,$http) {
         console.log($scope.players)
     });
 
+    bsocket.on('leaderdataboard', function(teamsize){
+        $scope.pls=teamsize
+    });
+    
+    bsocket.on('updatephaseboard', function(phase){
+        console.log("phase recieved")
+        $scope.now.phase=phase
+    });
+    
+    bsocket.on('selectedplayerstoboard', function(players){
+        console.log("players recieved")
+        $scope.now["selplayers"]=players
+    });
+    
+    bsocket.on('sendnumberofvotes', function(data) {
+        $scope.votesn=data[0]
+        $scope.votesv=data[1]
+    });
+    bsocket.on('voteendtimer', function(timeleft) {
+        $scope.votest=timeleft
+    });
+    
+    
+    bsocket.on('missionresult', function(result) {
+        
+        var opacity = anime.timeline();
+        opacity
+          .add({
+            targets: '.boardmain',
+            height: 300,
+            duration: 500,
+            easing: 'linear'
+            })
+           
+        console.log("missionresults")
+        var gif = document.getElementById('gif');
+        if (result==1){
+            //$scope.resultgif="/img/missionpass.gif"
+            gif.src = "/img/missionpass.gif"+"?a="+Math.random();;
+        }
+        else {
+            gif.src = "/img/missionfail.gif"+"?a="+Math.random();;
+        }
+        opacity
+          .add({
+            targets: '.boardmain',
+            height: 0,
+            duration: 500,
+            delay:6500,
+            easing: 'linear'
+            })
+    });
+    
+    
+    
+    bsocket.on('updateboard', function(data){
+        $scope.score=data[0]
+        $scope.fvotes=data[1]
+        $scope.now.phase=data[2]
+        $scope.now.selplayers=data[3]
+        $scope.sabotages=data[4]
+    });
+    
+    bsocket.on('refreshboard', function(data){
+        $scope.started=true
+    });
+    //bsocket.on('sabotages', function(d){
+    //  console.log(d)
+    //    $scope.sabotages[d[1]]=new Array(d[0]); 
+    //    $scope.$apply()
+    //});
+    bsocket.on('voteresult', function(data){
+        if (data[0]==1) [//pass
+            $scope.voteresult=data[1]
+        ]
+        else if (data[0]==0) [//fail
+            $scope.voteresult=data[1]
+        ]
+    });
 });
+

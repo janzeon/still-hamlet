@@ -37,7 +37,24 @@
       font-weight: 800;
       margin-bottom: -20px;
     }
+    .overlaymessage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -100px;
+        margin-left: -75px;
+        z-index: 1;
+        font-size: 150px;
+    }
     .pointer {cursor: pointer; }
+      
+    .resultgif{
+        /*display:none;*/
+        background-color: #202020;
+        height:0px;
+        overflow:auto;
+      }
+      
   </style>
   <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
   <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
@@ -49,10 +66,10 @@
 </head>
 
 <body class="bg-dark" ng-controller="Main">
-  <div class="py-5 gradient-overlay" >
-    <div class="container">
+  <div class="py-5 gradient-overlay " >
+    <div class="container ">
       <div class="row">
-        <div class="col-md-6 m-0 p-0" id="book" ng-hide="started">
+        <div class="col-md-10 m-0 p-0" id="book" ng-hide="started">
           <div class="card">
             <div class=" px-5 py-2">
               <div class="row">
@@ -103,7 +120,7 @@
                 </div>
                 <button ng-click="startgame()" class="btn mt-2 btn-outline-dark btn-block saira-200" ng-disabled="njoinedplayers()!=nplayers" ng-class="{'text-white bg-accept pointer':njoinedplayers()==nplayers}">Start Game</button>
                   <p class="saira-200" ng-show="njoinedplayers()>nplayers">Too many players, select the right number of players. If this is unintentional, please try a new room.</p>
-                  <p class="saira-200" ng-show="njoinedplayers()<nplayers"> Wating for all players have join...</p>
+                  <p class="saira-200" ng-show="njoinedplayers()<nplayers"> Wating for all players have joined...</p>
                 
               </form>
             </div>
@@ -126,7 +143,13 @@
           <div class="card text-center">
             <div class="card-header text-left py-1">Now</div>
             <div class="card-body p-2">
+              <div class="resultgif boardmain">
+                  <img id="gif" style="width: auto; height: 300px;" src="{{resultgif}}">
+              </div>
               <div class="row">
+                <div class="overlaymessage saira-800" ng-show="((now.phase=='vote' || now.phase=='mission') && votest>0)">{{votest}}</div>
+                  <div class="overlaymessage saira-800" ng-show="voteresult==1"><i class="fa fa-thumbs-up" style="color:#28B286" ></i></div>
+                    <div class="overlaymessage saira-800" ng-show="voteresult==-1"><i class="fa fa-thumbs-down" style="color:#FF8A6C" ></i></div>
                 <div class="col-md-6 p-3">
                   <h4 class="saira-400"><b><span style="font-weight: normal;"><b>{{phasetext[now.phase].title}}</b></span>
                     </b>
@@ -135,6 +158,8 @@
                   <p class="saira-200" ng-show="now.phase=='vote'">Do you agree to send the following Avalonians on this quest?</p>
                   <p class="saira-200" ng-show="now.phase=='mission'">May the Fates be in our favor... Farewell soldiers!</p>
                   <h4 class="text-muted saira-200">{{now.selplayers.join(', ')}}</h4>
+                  <h4 class="text-muted saira-200" ng-show="(now.phase=='vote' || now.phase=='mission')">{{votesv}}/{{votesn}} votes in.</h4>
+                  
                 </div>
                 <div class="col-md-6 ">
                   <p class="p-y-1 text-left p-3 m-0 saira-200">{{phasetext[now.phase].message}}</p>
@@ -149,18 +174,33 @@
             </div>
             <div class="col-md-2 text-center border" ng-class="{'fail bg-danger text-white': score[0]==0, 'bg-success text-white': score[0]==1}">
               <h1 class="saira-800 py-4 m-0">1</h1>
+                <div class="text-white" style="margin-top:-1.5rem">
+                    <i ng-repeat="s in sabotages[0] track by $index " class="fa fa-circle mx-1"></i>
+                </div>
             </div>
             <div class="col-md-2 text-center border" ng-class="{'fail bg-danger text-white': score[1]==0, 'bg-success text-white': score[1]==1}">
               <h1 class="saira-800 py-4 m-0">2</h1>
+                <div class="text-white" style="margin-top:-1.5rem">
+                    <i ng-repeat="s in sabotages[1] track by $index " class="fa fa-circle mx-1"></i>
+                </div>
             </div>
             <div class="col-md-2 text-center border" ng-class="{'fail bg-danger text-white': score[2]==0, 'bg-success text-white': score[2]==1}">
               <h1 class="saira-800 py-4 m-0">3</h1>
+                <div class="text-white" style="margin-top:-1.5rem">
+                    <i ng-repeat="s in sabotages[2] track by $index " class="fa fa-circle mx-1"></i>
+                </div>
             </div>
             <div class="col-md-2 text-center border" ng-class="{'fail bg-danger text-white': score[3]==0, 'bg-success text-white': score[3]==1}">
               <h1 class="saira-800 py-4 m-0">4</h1>
+                <div class="text-white" style="margin-top:-1.5rem">
+                    <i ng-repeat="s in sabotages[3] track by $index " class="fa fa-circle mx-1"></i>
+                </div>
             </div>
             <div class="col-md-2 text-center border" ng-class="{'fail bg-danger text-white': score[4]==0, 'bg-success text-white': score[4]==1}">
               <h1 class="saira-800 py-4 m-0">5</h1>
+                <div class="text-white" style="margin-top:-1.5rem">
+                    <i ng-repeat="s in sabotages[4] track by $index " class="fa fa-circle mx-1"></i>
+                </div>
             </div>
           </div>
           <div class="row pi-draggable px-3" id="c_row-2col-a">
@@ -179,11 +219,11 @@
             <div class="col-md-1 text-center border" ng-class="{'bg-dark text-white': fvotes==4}">
               <h3 class="saira-200 py-2 m-0">4</h3>
             </div>
-            <div class="col-md-5 text-center border bg-danger text-white">
+            <div class="col-md-5 text-center border text-danger">
               <div class="container">
                 <div class="row">
                   <h3 class="col-md-2 saira-800 py-2 m-0">5</h3>
-                  <p class="col-md-8 m-0">Time has run out, the mission failed...</p>
+                  <p class="col-md-8 m-0">Mission will fail...</p>
                 </div>
               </div>
             </div>

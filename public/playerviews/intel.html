@@ -23,57 +23,93 @@
       <div class="text-center justify-content-end" id="navbar2SupportedContent">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="#">Intel</a>
+            <a class="nav-link" ng-click="gotogame()">Return to Game</a>
+            <a class="nav-link active"  ng-click="gotointel()">Intel</a>
           </li>
         </ul>
       </div>
     </div>
   </nav>
-  <div class="text-center py-4">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <h1 class="">Merlin</h1>
+    <div >
+      <div class="text-center py-4">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12">
+              <h1 class="" ng-show="char=='Merlin'">Merlin</h1>
+              <h1 class="" ng-show="char=='Knight'">Knight</h1>
+              <h1 class="" ng-show="char=='Minion'">Minion</h1>
+              <h1 class="" ng-show="char=='Assassin'">Assassin</h1>
+              <h1 class="" ng-show="char=='Mordred'">Mordred</h1>
+              <h1 class="" ng-show="char=='Percival'">Percival</h1>
+              <h1 class="" ng-show="char=='Morgana'">Morgana</h1>
+              <h1 class="" ng-show="char=='Oberon'">Oberon</h1>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12"> </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12" ng-show="char=='Merlin'">
+              <p class="lead"><i>He who can look into the future.</i>
+                <br>Merlin alone knows of the agents of evil, but he must speak of it only in riddles. If his true identity is discovered, all will be lost.</p>
+            </div>
+              <div class="col-md-12" ng-show="char=='Knight'">
+              <p class="lead"><i>A loyal soldier of King Arthur</i>
+                <br>Thou must assist in securing the success of the quests. Beware of the Minions of Mordred as they lurk among thee. Keep an ear out for Merlin's riddles and Percival's council.</p>
+            </div>
+              <div class="col-md-12" ng-show="char=='Minion'">
+              <p class="lead"><i>A mighty minion of the evil Mordred</i>
+                <br>Thou art a spy among King Arthur's Knight, tasked with sabotaging their doomed plans. You must first gain their trust if thee wish to be allowed access. Do what thee wilt.</p>
+            </div>
+              <div class="col-md-12" ng-show="char=='Assassin'">
+              <p class="lead"><i>A dark assassin hired by the evil Mordred</i>
+                <br>Thou must infiltrate the enemy and seek out Merlin. His death ought to be the key to the success of Mordred's schemes. Hurry, time is fleeting.</p>
+            </div>
+              <div class="col-md-12" ng-show="char=='Mordred'">
+              <p class="lead"><i>The most powerful dark wizard Avalon has ever seen</i>
+                <br>Mordred's powerful magic hides his actions and identity even from Merlin himself. </p>
+            </div>
+              <div class="col-md-12" ng-show="char=='Morgana'">
+              <p class="lead"><i>A shapeshifting demon loyal to Mordred</i>
+                <br>Thou art to decieve the Knights as Merlin, so they hark instead to thy council. Thou shall leadeth those folk to their doom</p>
+            </div>
+              <div class="col-md-12" ng-show="char=='Oberon'">
+              <p class="lead"><i>A lone wolf</i>
+                <br>Thee despise Mordred for meddling in thy business, but thee despise Arthur more for he may cost thee thy home. While Mordred and his minions may not know of thee, Merlin does, tread carefully.</p>
+            </div>
+              <div class="col-md-12" ng-show="char=='Percival'">
+              <p class="lead"><i>King Arthur's mightiest Knight and Merlin's gaurd.</i>
+                <br>Thou must protect Merlin's identity or all will be lost. Heed Merlin's warnings and lead the other Knight and Avalon to victory.</p>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="row">
-        <div class="col-md-12"> </div>
+      <div class="">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12">
+              <img ng-show="char=='Merlin'"class="img-fluid d-block mx-auto rounded" ng-src="{{images[char]}}"> </div>
+          </div>
+        </div>
       </div>
-      <div class="row">
-        <div class="col-md-12">
-          <p class="lead"><i>He who can look into the future.&nbsp;</i>
-            <br>Merlin alone knows of the agents of evil, but he must speak of it only in riddles. If his true identity is discovered, all will be lost.</p>
+      <div class="py-4" ng-hide="(char=='Knight' || char=='Oberon')">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12">
+              <h4 class="text-left" contenteditable="true" ng-hide="char=='Percival'">Agents of Evil</h4>
+              <h4 class="text-left" contenteditable="true" ng-show="char=='Percival'">Merlin</h4>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12 text-left">
+              <ul class="list-group">
+                <li ng-repeat="i in intel" class="list-group-item">{{i}}</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <img class="img-fluid d-block mx-auto rounded" src="https://i.ytimg.com/vi/W1pdEQB6cSU/hqdefault.jpg"> </div>
-      </div>
-    </div>
-  </div>
-  <div class="py-4">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <h4 class="text-left" contenteditable="true">Agents of Evil</h4>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12 text-left">
-          <ul class="list-group">
-            <li class="list-group-item">John Doe</li>
-            <li class="list-group-item">Jane Doe</li>
-            <li class="list-group-item">Joe Doe</li>
-            <li class="list-group-item">June Doe</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
 </body>
 
 </html>
