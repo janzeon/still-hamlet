@@ -159,9 +159,9 @@ io.on('connection', function(socket){
       players[userId]={"room":room,"id":socket.id} //register board in players variable.
       console.log(players)
       
-      rooms[room]={"players":{"IDytwu67":{"nickname":"Janardhan", "selected":0, "vote":-1},"IDxtwub67":{"nickname":"Nick", "selected":0,  "vote":-1},"IDxytw67":{"nickname":"Mario", "selected":0,  "vote":-1},"IDxytub67":{"nickname":"Jana", "selected":0,  "vote":-1}},
-      //rooms[room]={"players":{},
-    "score":[-1,-1,-1,-1,-1],"sabotages":[-1,-1,-1,-1,-1],"characters":[], "n":-1,"fvotes":0,"nvotes":[],"mvotes":[],"leader":4,"mission":1,"phase":"leader","selplayers":[], "started":false, "bid":socket.nickname}
+      //rooms[room]={"players":{"IDytwu67":{"nickname":"Janardhan", "selected":0, "vote":-1},"IDxtwub67":{"nickname":"Nick", "selected":0,  "vote":-1},"IDxytw67":{"nickname":"Mario", "selected":0,  "vote":-1},"IDxytub67":{"nickname":"Jana", "selected":0,  "vote":-1}},
+      rooms[room]={"players":{},
+    "score":[-1,-1,-1,-1,-1],"sabotages":[-1,-1,-1,-1,-1],"characters":[], "n":-1,"fvotes":0,"nvotes":[],"mvotes":[],"leader":0,"mission":1,"phase":"leader","selplayers":[], "started":false, "bid":socket.nickname}
   }
   else if (userId.startsWith("board") && (userId in players) && rooms[players[userId].room].started) {
       socket.join(String(players[userId].room))//join room again
