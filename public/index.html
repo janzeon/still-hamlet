@@ -1,73 +1,212 @@
+<!DOCTYPE html>
 <html>
-  <head>
-    <title>Socket.IO chat</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font: 13px Helvetica, Arial; }
-      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages li { padding: 5px 10px; }
-      #messages li:nth-child(odd) { background: #eee; }
-      #messages { margin-bottom: 40px }
-    </style>
-  </head>
-  <body>
-    <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
-      <input id="r" autocomplete="off" placeholder="roomnumber"/><button>Send</button>
-      <input id="n" autocomplete="off" placeholder="nickname"/><button>Send</button>
-    </form>
-    <button id="leaveroom">Leave</button>
-    <button id="start">Start</button>
-    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
-    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-    <script>
-      $(function () {
-          
-        function generateHash(len) {
-          var symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-          var hash = '';
-          for (var i = 0; i < len; i++) {
-            var symIndex = Math.floor(Math.random() * symbols.length);
-            hash += symbols.charAt(symIndex);
-          }
-          return hash;
-        }
-        if (!/\buser_id=/.test(document.cookie)) { //if no 'user_id' in cookies
-          document.cookie = 'user_id=' + generateHash(32);  //add cookie 'user_id'
-        }
-          
-        var socket = io();
-        $('form').submit(function(){
-          console.log("message sent")
-          socket.emit('join', $('#r').val())
-          socket.emit('nickname', $('#n').val());
-          socket.emit('missonstat', $('#m').val());
-          $('#m').val('');
-          $('#n').val('');
-          $("#r").prop('disabled', true);
-          $.get("/submit");
-          return false;
-        });
-         
-        $('#leaveroom').click(function(){
-          console.log("Leaving room")
-          $("#r").prop('disabled', false);
-          socket.emit('leaveroom', "Disconnect from room")
-        }); 
-        $('#start').click(function(){
-          console.log("Starting game in room "+ $('#r').val())
-          socket.emit('startroom', $('#r').val())
-        });
-          
-        socket.on('chat', function(msg){
-          $('#messages').append($('<li>').text(msg));
-          window.scrollTo(0, document.body.scrollHeight);
-        });
-      });
-    </script>
-  </body>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css">
+  <link rel="stylesheet" href="https://pingendo.com/assets/bootstrap/bootstrap-4.0.0-beta.1.css" type="text/css"> </head>
+
+<body class="">
+  <div class="py-5" style="background-image: url(&quot;/Users/jmahadev/Desktop/4.png&quot;); background-position: center center;">
+    <div class="container py-5">
+      <div class="row">
+        <div class="col-md-12 text-white align-self-center text-center">
+          <img class="img-fluid d-block mx-auto mb-5 w-25 my-0" src="/Users/jmahadev/Desktop/App/avalon/APP/public/img/logo.png" height="300px">
+          <h1 class="display-3 mb-4 text-center m-0 p-0">Embrace the chaos!</h1>
+          <a href="/board" class="btn btn-lg mx-1 btn-secondary text-center">Game Board</a>
+          <a href="/player" class="btn btn-lg btn-primary mx-1 text-center">Player Console</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="py-5 text-white gradient-overlay bg-secondary">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-7 text-md-left text-center align-self-center my-5">
+          <h1 class="display-1">Rules</h1>
+          <p class="lead">A how-to-play video with the original board game.</p>
+          <a href="http://upload.snakesandlattes.com/rules/r/ResistanceAvalon.pdf" class="btn btn-lg mx-1 btn-secondary">Original Rule Book</a>
+        </div>
+        <div class="col-md-5">
+          <div class="col-md-12">
+            <div class="embed-responsive embed-responsive-4by3  rounded">
+              <iframe src="https://www.youtube.com/embed/LUjF2R0oKuA" allowfullscreen="" allow="encrypted-media" frameborder="0" gesture="media" height="315" width="560"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="py-5 text-center bg-light">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1>Main Characters</h1>
+          <p class="lead">A classic good vs evil story</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3 p-4">
+          <img class="img-fluid d-block rounded-circle mx-auto" src="App/avalon/APP/public/img/Merlin.png">
+          <p><b>Merlin</b>
+            <br>Great Wizard of Avalon</p>
+          <p class="my-4"><i>Knows the agents of evil. <i>(Except Mordred)</i></i>
+          </p>
+        </div>
+        <div class="col-md-3 p-4">
+          <img class="img-fluid d-block rounded-circle mx-auto" src="App/avalon/APP/public/img/Knight.png">
+          <p><b>Knight</b>
+            <br>King Arthurs' Faithful Servant</p>
+          <p class="my-4"><i>Knows nothing.</i> </p>
+        </div>
+        <div class="col-md-3 p-4">
+          <img class="img-fluid d-block rounded-circle mx-auto" src="App/avalon/APP/public/img/Assassin.png">
+          <p><b>Assassin</b>
+            <br>Merlin Killer</p>
+          <p class="my-4"><i>Knows other Minions of Mordred.</i> </p>
+        </div>
+        <div class="col-md-3 p-4">
+          <img class="img-fluid d-block rounded-circle mx-auto" src="App/avalon/APP/public/img/Minion.png">
+          <p><b>Minion</b>
+            <br>Mordred's Faithful Servant</p>
+          <p class="my-4"><i>Knows other Minions of Mordred</i></p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h1>Special Characters</h1>
+          <p class="lead">If you want to spice things up.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-3 p-4">
+          <img class="img-fluid d-block rounded-circle mx-auto" src="App/avalon/APP/public/img/Mordred.png">
+          <p><b>Mordred</b>
+            <br>Dark Wizard of Avalon</p>
+          <p class="my-4"><i>Invisible to Merlin.&nbsp;<br>Knows other Minions of Mordred<br></i> </p>
+        </div>
+        <div class="col-md-3 p-4">
+          <img class="img-fluid d-block rounded-circle mx-auto" src="App/avalon/APP/public/img/Percival.png">
+          <p><b>Percival</b>
+            <br>Merlin's Gaurd</p>
+          <p class="my-4"><i>Knows Merlin</i></p>
+        </div>
+        <div class="col-md-3 p-4">
+          <img class="img-fluid d-block rounded-circle mx-auto" src="App/avalon/APP/public/img/Morgana.png">
+          <p><b>Morgana</b>&nbsp;
+            <br>Shapeshifting Demon</p>
+          <p class="my-4"><i>Appears to Percival as Merlin<br></i> </p>
+        </div>
+        <div class="col-md-3 p-4">
+          <img class="img-fluid d-block rounded-circle mx-auto" src="App/avalon/APP/public/img/Oberon.png">
+          <p><b>Oberon</b>
+            <br>Prince of the Tree Elves</p>
+          <p class="my-4"><i>Knows no one. <br>Known to no one. (not a Minion)<br></i> </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="py-5 bg-light">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1 class="text-left">Game Phases</h1>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4 p-4"><i class="d-block mx-auto fa fa-5x fa-users text-center"></i>
+          <p class="my-4 text-center"><i>Quest leader will propose a team</i></p>
+          <p><b>Leader Phase</b>
+            <br>The leader-torch passes over to the next player. Size of the team is determined by mission # and total number of players (will be shown on screen).&nbsp;</p>
+        </div>
+        <div class="col-md-4 p-4 text-center"> <i class="mx-auto fa fa-thumbs-up fa-5x"></i><i class="mx-auto fa fa-thumbs-down fa-5x"></i>
+          <p class="my-4 text-center"><i class="text-center">All players will vote on the team proposal</i></p>
+          <p class="text-left"><b>Voting Phase</b>
+            <br>If majority accepts, move onto the Quest Phase. If majority rejects or there is a tie, go back to the Leader Phase (new leader). Mission will fail if 5 teams are rejected. &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;
+            <br> </p>
+        </div>
+        <div class="col-md-4 p-4"> <i class="d-block mx-auto fa fa-5x fa-first-order text-center"></i>
+          <p class="my-4 text-center"><i class="text-center">Team will go on a Quest</i></p>
+          <p><b>Quest Phase</b>
+            <br>Blue team can only assist. Red team can either assist or sabotage the quest. One sabotage needed to fail a quest, except for Quest #4 when playing with 7-10 players</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h1 class="text-left">End of Game</h1>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 p-4 text-center"> <i class="mx-auto fa fa-5x fa-first-order text-center"></i><i class="mx-auto fa fa-5x fa-first-order text-center"></i><i class="mx-auto fa fa-5x fa-first-order text-center"></i>
+          <p class="my-4 text-center"><i class="text-center">3/5</i></p>
+          <p><b>Majority of 5 Quests</b>
+            <br>If Red team wins, Game Over. If Blue team wins, move onto Assassin phase.</p>
+        </div>
+        <div class="col-md-6 p-4 text-center"> <i class="mx-auto fa fa-5x text-center fa-bomb"></i>
+          <p class="my-4 text-center"><i class="text-center">Find and kill Merlin</i></p>
+          <p><b>Assassin</b>
+            <br>If successful, Red wins, else Blue wins.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="text-white bg-dark">
+    <div class="container">
+      <div class="row">
+        <div class="p-5 col-md-3"> <i class="fa mb-5 fa-adn fa-5x"></i>
+          <h3 class="mb-4">Avalon Online</h3>
+          <ul class="list-unstyled">
+            <a href="#" class="text-white">Home</a>
+            <br>
+            <a href="#" class="text-white">Game Board</a>
+            <br>
+            <a href="#" class="text-white">Player console</a>
+            <br>
+            <a href="#" class="text-white">Rules
+              <br> </a>
+          </ul>
+        </div>
+        <div class="p-5 col-md-4">
+          <h3 class="mb-4">Latest Updates</h3>
+          <ul>
+            <li>Character art</li>
+            <li>Persistent rooms</li>
+          </ul>
+          <h3 class="mb-4">Coming Soon</h3>
+          <ul>
+            <li>Lady of the Lake Expansion</li>
+            <li>Lancelot Expansion</li>
+            <li>Video Chat</li>
+          </ul>
+        </div>
+        <div class="p-5 col-md-5">
+          <h3>Get in touch</h3>
+          <form class="my-4">
+            <fieldset class="form-group"> <label for="exampleInputEmail1">Get monthly updates</label>
+              <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter email"> </fieldset>
+            <button type="submit" class="btn btn-outline-light">Submit</button>
+          </form>
+          <h3 class="mt-5">Social</h3>
+          <div class="align-self-center col-12 my-4">
+            <a href="https://www.facebook.com" target="_blank"><i class="fa fa-facebook d-inline fa-lg mr-3 text-white"></i></a>
+            <a href="https://twitter.com" target="_blank"><i class="fa fa-twitter d-inline mx-3 fa-lg text-white"></i></a>
+            <a href="https://www.instagram.com" target="_blank"><i class="fa fa-instagram d-inline mx-3 fa-lg text-white"></i></a>
+            <a href="https://plus.google.com" target="_blank"><i class="fa fa-google-plus-official d-inline mx-3 fa-lg text-white"></i></a>
+            <a href="https://pinterest.com" target="_blank"><i class="fa fa-pinterest-p d-inline mx-3 fa-lg text-white"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 mt-3">
+          <p class="text-center">© Copyright 2017 JM - All rights reserved. </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+</body>
+
 </html>
