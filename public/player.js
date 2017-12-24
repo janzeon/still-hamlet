@@ -99,14 +99,14 @@ app.config(function($stateProvider, $urlRouterProvider) {
         .state('intel', {
             templateUrl: 'playerviews/intel.html',
             controller: function($scope, psocket, $state) {
-                $scope.images={"Merlin":"https://i.ytimg.com/vi/W1pdEQB6cSU/hqdefault.jpg",
-                       "Percival":"https://vignette.wikia.nocookie.net/heroes-of-camelot/images/4/46/Sir_Percival_T1.PNG/revision/latest?cb=20140812113124",
-                        "Morgana":"https://vignette.wikia.nocookie.net/heroes-of-camelot/images/3/31/MorganaTheYoungT1.png/revision/latest/scale-to-width-down/662?cb=20141211204755",
-                        "Oberon":"https://vignette.wikia.nocookie.net/heroes-of-camelot/images/6/65/Ember_Druid.jpg/revision/latest?cb=20140304143742",
-                        "Mordred":"https://vignette.wikia.nocookie.net/heroes-of-camelot/images/5/53/Screenshot_2016-09-19-08-01-18.jpg/revision/latest?cb=20160925145047",
-                        "Knight":"https://vignette.wikia.nocookie.net/heroes-of-camelot/images/6/65/2015-11-13_19.58.23.png/revision/latest/scale-to-width-down/665?cb=20151114031253",
-                        "Minion":"https://vignette.wikia.nocookie.net/heroes-of-camelot/images/6/6b/IwynasTheSageT4.jpg/revision/latest?cb=20160106211728",
-                        "Assassin":"https://vignette.wikia.nocookie.net/heroes-of-camelot/images/f/f2/Shanke_T3.jpg/revision/latest?cb=20150318220539",
+                $scope.images={"Merlin":"/img/Merlin.png",
+                        "Morgana":"/img/Morgana.png",
+                        "Oberon":"/img/Oberon.png",
+                        "Mordred":"/img/Mordred.png",
+                        "Knight":"/img/Knight.png",
+                        "Minion":"/img/Minion.png",
+                        "Assassin":"/img/Assassin.png",
+                        "Percival":"/img/Percival.png",
                        }
                 psocket.emit("getintel",$scope.room);
                 psocket.on('intel', function(data) {

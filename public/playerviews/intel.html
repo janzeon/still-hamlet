@@ -13,6 +13,27 @@
       font-weight: 800;
       margin-bottom: -20px;
     }
+    .badinline {
+        background-color: #EF7674;
+        color: white;
+        padding: 3px 5px;
+      }
+      .goodinline {
+        background-color: #0195ba;
+        color: white;
+        padding: 3px 5px;
+      }
+      .greyinline {
+        background-color: grey;
+        color: white;
+        padding: 3px 5px;
+      }
+      .good {
+          color: #0195ba;
+      }
+      .bad {
+          color: #EF7674;
+      }
   </style>
 </head>
 
@@ -24,7 +45,6 @@
         <ul class="navbar-nav">
           <li class="nav-item">
             <a class="nav-link" ng-click="gotogame()">Return to Game</a>
-            <a class="nav-link active"  ng-click="gotointel()">Intel</a>
           </li>
         </ul>
       </div>
@@ -35,14 +55,14 @@
         <div class="container">
           <div class="row">
             <div class="col-md-12">
-              <h1 class="" ng-show="char=='Merlin'">Merlin</h1>
-              <h1 class="" ng-show="char=='Knight'">Knight</h1>
-              <h1 class="" ng-show="char=='Minion'">Minion</h1>
-              <h1 class="" ng-show="char=='Assassin'">Assassin</h1>
-              <h1 class="" ng-show="char=='Mordred'">Mordred</h1>
-              <h1 class="" ng-show="char=='Percival'">Percival</h1>
-              <h1 class="" ng-show="char=='Morgana'">Morgana</h1>
-              <h1 class="" ng-show="char=='Oberon'">Oberon</h1>
+              <h1 class="good" ng-show="char=='Merlin'">Merlin</h1>
+              <h1 class="good" ng-show="char=='Knight'">Knight</h1>
+              <h1 class="bad" ng-show="char=='Minion'">Minion</h1>
+              <h1 class="bad" ng-show="char=='Assassin'">Assassin</h1>
+              <h1 class="bad" ng-show="char=='Mordred'">Mordred</h1>
+              <h1 class="good" ng-show="char=='Percival'">Percival</h1>
+              <h1 class="bad" ng-show="char=='Morgana'">Morgana</h1>
+              <h1 class="bad" ng-show="char=='Oberon'">Oberon</h1>
             </div>
           </div>
           <div class="row">
@@ -50,36 +70,38 @@
           </div>
           <div class="row">
             <div class="col-md-12" ng-show="char=='Merlin'">
-              <p class="lead"><i>He who can look into the future.</i>
-                <br>Merlin alone knows of the agents of evil, but he must speak of it only in riddles. If his true identity is discovered, all will be lost.</p>
+              <p class="lead"><i>The Great Wizard of Avalon.</i>
+                  <br>Thy visions warn thee against <span ng-repeat-start="i in intel" class="badinline">{{i}}</span><span ng-repeat-end> <span ng-hide="$index>=intel.length-2">,</span><span ng-show="$index==intel.length-2"> and </span></span>, for they are agents of Evil. But thee must speak of it only in riddles. If thine true identity is discovered, all will be lost.</p>
             </div>
               <div class="col-md-12" ng-show="char=='Knight'">
-              <p class="lead"><i>A loyal soldier of King Arthur</i>
-                <br>Thou must assist in securing the success of the quests. Beware of the Minions of Mordred as they lurk among thee. Keep an ear out for Merlin's riddles and Percival's council.</p>
+              <p class="lead"><i>A mighty soldier loyal to King Arthur.</i>
+                <br>Thou must assist in securing the success of the quests. Beware of the Minions of Mordred as they lurk among thee. Keep an ear out for Merlin's riddles and Percival's council.
             </div>
               <div class="col-md-12" ng-show="char=='Minion'">
-              <p class="lead"><i>A mighty minion of the evil Mordred</i>
-                <br>Thou art a spy among King Arthur's Knight, tasked with sabotaging their doomed plans. You must first gain their trust if thee wish to be allowed access. Do what thee wilt.</p>
+              <p class="lead"><i>A mighty soldier loyal to Mordred.</i>
+                  <br>Thou art a spy among King Arthur's Knight. Aid thine fellows <span ng-repeat-start="i in intel" class="badinline">{{i}}</span><span ng-repeat-end> <span ng-hide="$index>=intel.length-2">,</span><span ng-show="$index==intel.length-2"> and </span></span> in sabotaging Arthur's efforts. Thou must first gain their trust if thee wish to be allowed access to their schemes. Do what thee wilt.</p>
             </div>
               <div class="col-md-12" ng-show="char=='Assassin'">
-              <p class="lead"><i>A dark assassin hired by the evil Mordred</i>
-                <br>Thou must infiltrate the enemy and seek out Merlin. His death ought to be the key to the success of Mordred's schemes. Hurry, time is fleeting.</p>
+              <p class="lead"><i>A dark assassin.</i>
+                <br>Thou must infiltrate the enemy and seek out Merlin. His death ought to be the key to Mordred's success. Hurry, time is fleeting. Consult with thine fellows <span ng-repeat-start="i in intel" class="badinline">{{i}}</span><span ng-repeat-end> <span ng-hide="$index>=intel.length-2">,</span><span ng-show="$index==intel.length-2"> and </span></span> and find him with haste.</p>
             </div>
               <div class="col-md-12" ng-show="char=='Mordred'">
-              <p class="lead"><i>The most powerful dark wizard Avalon has ever seen</i>
-                <br>Mordred's powerful magic hides his actions and identity even from Merlin himself. </p>
+              <p class="lead"><i>The most powerful dark wizard Avalon has ever seen.</i>
+                <br>Mordred's powerful magic hides his actions and identity even from Merlin himself. Your minions <span ng-repeat-start="i in intel" class="badinline">{{i}}</span><span ng-repeat-end> <span ng-hide="$index>=intel.length-2">,</span><span ng-show="$index==intel.length-2"> and </span></span> await your command.</p>
             </div>
               <div class="col-md-12" ng-show="char=='Morgana'">
-              <p class="lead"><i>A shapeshifting demon loyal to Mordred</i>
-                <br>Thou art to decieve the Knights as Merlin, so they hark instead to thy council. Thou shall leadeth those folk to their doom</p>
+              <p class="lead"><i>The shapeshifting demon.</i>
+                <br>Thou art to decieve the Knights as Merlin, so they hark instead to thy council. Thou along with your fellows <span ng-repeat-start="i in intel" class="badinline">{{i}}</span><span ng-repeat-end> <span ng-hide="$index>=intel.length-2">,</span><span ng-show="$index==intel.length-2"> and </span></span> shall leadeth Arthur and his followers to their doom</p>
             </div>
               <div class="col-md-12" ng-show="char=='Oberon'">
-              <p class="lead"><i>A lone wolf</i>
-                <br>Thee despise Mordred for meddling in thy business, but thee despise Arthur more for he may cost thee thy home. While Mordred and his minions may not know of thee, Merlin does, tread carefully.</p>
+              <p class="lead"><i>Prince of the tree elves.</i>
+                <br>Thee despise Mordred for meddling in thy business, but thee despise Arthur more for he may cost thee thy home. While Mordred and his minions may not know of thee, Merlin does, thou must tread carefully.</p>
             </div>
               <div class="col-md-12" ng-show="char=='Percival'">
               <p class="lead"><i>King Arthur's mightiest Knight and Merlin's gaurd.</i>
-                <br>Thou must protect Merlin's identity or all will be lost. Heed Merlin's warnings and lead the other Knight and Avalon to victory.</p>
+                  <br><span ng-show="intel.length==1">Thou must protect <span class="goodinline">{{intel[0]}}</span>'s true identity or all will be lost.</span>
+                  <span ng-show="intel.length==2">Some dark magic is at play, thine eyes trick thee for you see two of Merlin - <span ng-repeat-start="i in intel" class="greyinline">{{i}}</span><span ng-repeat-end><span ng-show="$index==intel.length-2"> and </span></span>. One of them must be the evil shapeshifter, Morgana. Thou must seek out Merlin hastily or all will be lost.</span>
+                  Heed his warnings and lead the other Knights and Avalon to victory.</p>
             </div>
           </div>
         </div>
@@ -88,7 +110,7 @@
         <div class="container">
           <div class="row">
             <div class="col-md-12">
-              <img ng-show="char=='Merlin'"class="img-fluid d-block mx-auto rounded" ng-src="{{images[char]}}"> </div>
+              <img class="img-fluid d-block mx-auto rounded" ng-src="{{images[char]}}"> </div>
           </div>
         </div>
       </div>
