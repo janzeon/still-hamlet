@@ -533,7 +533,7 @@ io.on('connection', function(socket){
   socket.on('closeroom', function(room) {
     delete players[rooms[room].bid]
     delete rooms[room]
-  }
+  })
     
   function winlose(room,r){ //update game end status to player consoles
       rooms[room]
