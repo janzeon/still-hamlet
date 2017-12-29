@@ -57,6 +57,9 @@ app.controller('Main', function($scope, psocket, $state) {
         console.log($scope.phase)
          //$state.go('wait')
     }
+    $scope.join=function(){
+        $state.go('join')
+    }
 
 });
 
@@ -153,6 +156,32 @@ app.config(function($stateProvider, $urlRouterProvider) {
             }  
         })
     
+        .state('assassin', {
+            templateUrl: 'playerviews/leader.html',
+            controller: function($scope, psocket, $state) {
+                console.log($scope.room)
+                psocket.on('leaderdata', function(data) {
+                    console.log(data)
+                    $scope.teamsize=1
+                    $scope.players=data.players
+                });
+                psocket.emit("leaderready",$scope.room);
+                $scope.selected=[]
+                $scope.select = function(p){
+                    if ($scope.selected.indexOf(p)==-1) {
+                       while ($scope.selected.length >= $scope.teamsize){
+                            $scope.selected.shift()
+                        } 
+                        $scope.selected.push(p)
+                    }
+                    psocket.emit("selectedteam",[$scope.room, $scope.selected]);
+                }
+                $scope.submit=function(){
+                    psocket.emit("assassindone",[$scope.room, $scope.selected]);
+                }
+            }  
+        })
+    
         .state('vote', {
             templateUrl: 'playerviews/tvote.html',
             controller: function($scope, psocket, $state) {
@@ -178,6 +207,37 @@ app.config(function($stateProvider, $urlRouterProvider) {
                     psocket.emit("missionselected",[$scope.room,$scope.selected]);
                 }
             }  
+        })
+    
+        .state('victory', {
+            url: '/v',
+            templateUrl: 'playerviews/victory.html',
+            controller: function($scope, psocket, $state) {
+                psocket.on('won', function(l) {
+                    if(l=="b"){
+                        $scope.loyalty=0
+                    }
+                    if(l=="g"){
+                        $scope.loyalty=1
+                    }
+                });
+                $scope.loyalty=-1 //0 is bad, 1 is good
+            }
+        })
+        .state('defeat', {
+            url: '/d',
+            templateUrl: 'playerviews/defeat.html',
+            controller: function($scope, psocket, $state) {
+                psocket.on('lost', function(l) {
+                    if(l=="b"){
+                        $scope.loyalty=0
+                    }
+                    if(l=="g"){
+                        $scope.loyalty=1
+                    }
+                });
+                $scope.loyalty=1 //0 is bad, 1 is good
+            }
         })
     
 });

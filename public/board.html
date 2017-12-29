@@ -54,6 +54,12 @@
         height:0px;
         overflow:auto;
       }
+    .redcanvas {
+        background: #FF6138;
+    }
+    .bluecanvas {
+        background: #2980B9;
+    }
       
   </style>
   <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
@@ -67,7 +73,31 @@
 </head>
 
 <body class="bg-dark" ng-controller="Main">
-  <div class="py-5 gradient-overlay " >
+  <div ng-hide="result==-1"> 
+    <div style="
+        margin: 5vh 0;
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        color: white;
+        padding:5vh;
+        z-index: 500;">
+        <h1 style="" ng-show="result==0">MORDRED &amp; MINIONS win!</h1>
+        <h1 style="" ng-show="result==1">ARTHUR &amp; KNIGHTS win!</h1>
+        <p style="margin: auto 15%;" ng-show="result==0">Arthur's forces have taken a huge hit, but theres rumors that he's assembling an army in Camlann
+        <br>This is not over. We must stop him at any cost.</p>
+        <p style="margin: auto 15%;" ng-show="result==1">Mordred has retreated back into Camlot. His forces are weakened but he still holds the castle.
+        <br>This is not over. We must assemble an army to take back Avalon.</p>
+        <button ng-click="join()" class="my-5 btn text-left text-light btn-dark">Play again!</button>
+    </div>
+    <canvas style="
+    display: block;
+        width: 100vw;
+        height: 100vh;
+        cursor: pointer;
+        " ng-class="{'redcanvas':result == 0, 'bluecanvas':result == 1}"></canvas>
+  </div>
+  <div class="py-5 gradient-overlay " ng-show="result==-1">
     <div class="container ">
       <div class="row">
         <div class="col-md-10 m-0 p-0" id="book" ng-hide="started">
@@ -129,13 +159,13 @@
         </div>
         <div class="col-md-2 bg-light text-dark" id="book">
           <div class="row">
-            <div class="col-md-12 border" ng-class="{'bg-info text-dark':player.selected, 'bg-dark text-white':player.mission}" ng-repeat="(pid, player) in players" >
+            <div class="col-md-12 col-6 border" ng-class="{'bg-info text-dark':player.selected, 'bg-dark text-white':player.mission}" ng-repeat="(pid, player) in players" >
               <div class="row">
-                <div class="col-md-9">
+                <div class="col-9">
                     <p class="lead m-0 saira-800">P{{$index + 1}} <i class="fa fa-dot-circle-o" ng-show="player.leader"></i></p>
                     <h4 class="saira-200">{{player.nickname}} </h4>
                 </div>
-                <div class="col-md-3" ng-class="{'bg-reject':player.vote==0, 'bg-accept':player.vote==1}"></div>
+                <div class="col-3" ng-class="{'bg-reject':player.vote==0, 'bg-accept':player.vote==1}"></div>
               </div>
             </div>
           </div>
@@ -158,6 +188,7 @@
                   <p class="saira-200" ng-show="now.phase=='leader'">Pick <span class="saira-800">{{pls}}</span> Avalonians for this quest.</p>
                   <p class="saira-200" ng-show="now.phase=='vote'">Do you agree to send the following Avalonians on this quest?</p>
                   <p class="saira-200" ng-show="now.phase=='mission'">May the Fates be in our favor... Farewell soldiers!</p>
+                  <p class="saira-200" ng-show="now.phase=='Assassin'">Evil has revealed itself, Merlin must be protected or all will be lost!</p>
                   <h4 class="text-muted saira-200">{{now.selplayers.join(', ')}}</h4>
                   <h4 class="text-muted saira-200" ng-show="(now.phase=='vote' || now.phase=='mission')">{{votesv}}/{{votesn}} votes in.</h4>
                   

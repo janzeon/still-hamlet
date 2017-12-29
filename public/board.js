@@ -36,7 +36,7 @@ app.controller('Main', function($scope, bsocket,$http) {
         "leader":{"title":"Team Leader", "message":"Discuss, discuss, discuss! All the players must participate in helping the Leader make the right choice of players to be on the Team. Active and logical discussion is a great way to catch Mordred's agents in their webs of deciet."},
         "vote":{"title":"Team Vote", "message":"The Leader has made his proposal known, but all the Avalonians have a Vote - you can accept or reject his proposal. The Leader may be Evil, or one of the players chosen could be a mistake. Choose carefully."},
         "mission":{"title":"The Quest", "message":"You have debated well and wisely chosen the brave knights and ladies with whom you place your trust. Now it is time to measure a person's true intent and loyalty to the noble cause for which Arthur fights. Be true and goodness will prevail!"},
-        "assasin":{"title":"Assassination", "message":"Mordred and Mi. can still win if they can assassinate Merlin."},
+        "assassin":{"title":"Assassination", "message":"Mordred and Mi. can still win if they can assassinate Merlin."},
     }
     
     rules={
@@ -145,12 +145,31 @@ app.controller('Main', function($scope, bsocket,$http) {
     $scope.votest=-1
     $scope.votesv=0
     $scope.votesn=0
+    $scope.result=-1
+    
     
     $scope.expansions="None"
     
     $scope.now={"phase":"", "selplayers":[]}
     
-    
+    $scope.join= function(){
+        $scope.score=[-1,-1,-1,-1,-1]
+        $scope.sabotages=[-1,-1,-1,-1,-1]
+        $scope.fvotes=0
+        $scope.leader=""
+        $scope.votest=-1
+        $scope.votesv=0
+        $scope.votesn=0
+        $scope.result=-1
+        $scope.players={}
+        $scope.started=false
+
+        $scope.expansions="None"
+
+        $scope.now={"phase":"", "selplayers":[]}
+        //window.location.reload(true)
+        
+    }
     
     $http.get('/roomnumber')
       .then(function(result) {
@@ -234,6 +253,16 @@ app.controller('Main', function($scope, bsocket,$http) {
         $scope.now.selplayers=data[3]
         $scope.sabotages=data[4]
     });
+    
+    bsocket.on('victory', function(r){
+        if(r==0) {
+            $scope.result=0
+        }
+        else if (r==1) {
+            $scope.result=1
+        }
+    });
+    
     
     bsocket.on('refreshboard', function(data){
         $scope.started=true

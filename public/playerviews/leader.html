@@ -15,9 +15,13 @@
   <div class="py-0">
     <div class="container">
       <div class="row">
-        <div class="col-md-12 p-4">
+        <div class="col-md-12 p-4" ng-show="phase=='leader'">
           <h1 class="">Team Leader</h1>
           <p class="lead m-2">Select your team - [<b>{{teamsize}}</b>] players</p>
+        </div>
+        <div class="col-md-12 p-4" ng-show="phase=='assassin'">
+          <h1 class="">Assassin</h1>
+          <p class="lead m-2">Kill Merlin, win the game!</p>
         </div>
       </div>
     </div>

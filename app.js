@@ -152,16 +152,18 @@ io.on('connection', function(socket){
       }
       return room
   }
-  if((userId.startsWith("board") && !(userId in players)) || (userId.startsWith("board") && (userId in players) && !rooms[players[userId].room].started)) {
+  //if(userId.startsWith("board") && (userId in players)) {
+  if((userId.startsWith("board") && !(userId in players))||(userId.startsWith("board") && (userId in players) && !rooms[players[userId].room].started)) {
       var room=assignroom()
       socket.join(String(room))//join room again
       console.log(io.sockets.adapter.rooms[room].sockets);
       players[userId]={"room":room,"id":socket.id} //register board in players variable.
       console.log(players)
       
-      //rooms[room]={"players":{"IDytwu67":{"nickname":"Janardhan", "selected":0, "vote":-1},"IDxtwub67":{"nickname":"Nick", "selected":0,  "vote":-1},"IDxytw67":{"nickname":"Mario", "selected":0,  "vote":-1},"IDxytub67":{"nickname":"Jana", "selected":0,  "vote":-1}},
-      rooms[room]={"players":{},
-    "score":[-1,-1,-1,-1,-1],"sabotages":[-1,-1,-1,-1,-1],"characters":[], "n":-1,"fvotes":0,"nvotes":[],"mvotes":[],"leader":0,"mission":1,"phase":"leader","selplayers":[], "started":false, "bid":socket.nickname}
+        //rooms[room]={"players":{"IDytwu67":{"nickname":"Janardhan", "selected":0, "vote":-1},"IDxtwub67":{"nickname":"Nick", "selected":0,  "vote":-1},"IDxytw67":{"nickname":"Mario", "selected":0,  "vote":-1},"IDxytub67":{"nickname":"Jana", "selected":0,  "vote":-1}},
+        rooms[room]={"players":{},
+        "score":[-1,-1,-1,-1,-1],"sabotages":[-1,-1,-1,-1,-1],"characters":[], "n":-1,"fvotes":0,"nvotes":[],"mvotes":[],"leader":0,"mission":1,"phase":"leader","selplayers":[], "started":false, "bid":socket.nickname}
+      
   }
   else if (userId.startsWith("board") && (userId in players) && rooms[players[userId].room].started) {
       socket.join(String(players[userId].room))//join room again
@@ -222,7 +224,7 @@ io.on('connection', function(socket){
       else if (rooms[room]["started"]!=true) {
           socket.join(String(room))
           
-          if (players[socket.nickname]["room"]!='') { //if the user is already in a room, remove them from other room first. 
+          if (players[socket.nickname]["room"]!='' && rooms[players[socket.nickname]["room"]]) { //if the user is already in a room, remove them from other room first. 
               var otherroom=players[socket.nickname]["room"] //store users current room
               delete rooms[String(otherroom)]['players'][socket.nickname]; //remove user from previous room
           }
@@ -237,10 +239,10 @@ io.on('connection', function(socket){
           //console.log(rooms[String(room)]['players'][socket.nickname])
           //console.log(rooms[room].bid)
           //console.log(players)
-          bid=players[rooms[room].bid].id
-          console.log(players[rooms[room].bid].id)
-          console.log(players[rooms[room].bid])
-          console.log(rooms[room].bid)
+          //bid=players[rooms[room].bid].id
+          //console.log(players[rooms[room].bid].id)
+          //console.log(players[rooms[room].bid])
+          //console.log(rooms[room].bid)
           //io.to(bid).emit('updateplayerlist', rooms[String(room)]['players'])
           io.to(room).emit('updateplayerlist', rooms[String(room)]['players'])
 
@@ -334,26 +336,27 @@ io.on('connection', function(socket){
     if (rooms[d[0]].nvotes.indexOf(socket.nickname)<0) {
         rooms[d[0]].nvotes.push(socket.nickname)
         console.log("adding to nvotes")
-    }
-    io.to(d[0]).emit('sendnumberofvotes', [rooms[d[0]].n, rooms[d[0]].nvotes.length]);
-    //uncomment for deployment \/
-    //if (rooms[d[0]].nvotes.length==rooms[d[0]].n-1) {
-    if (rooms[d[0]].nvotes.length==3) {
-        //Timer implementation
-        var timeleft = 5;
-        var downloadTimer = setInterval(function(){
-            timeleft--;
-            io.to(d[0]).emit('voteendtimer', timeleft);
-            if(timeleft <= 0) {
-                io.to(d[0]).emit('updateplayerlist', rooms[d[0]]['players']);
-                console.log("updating player list")
-                votesdone(d[0])
-                clearInterval(downloadTimer);
-            }
-        },1000);
-        
-        //io.emit('updateplayerlist', rooms[d[0]]['players']);
-        //console.log("updating player list")
+    
+        io.to(d[0]).emit('sendnumberofvotes', [rooms[d[0]].n, rooms[d[0]].nvotes.length]);
+        //uncomment for deployment \/
+        if (rooms[d[0]].nvotes.length==rooms[d[0]].n) {
+        //if (rooms[d[0]].nvotes.length==3) {
+            //Timer implementation
+            var timeleft = 5;
+            var downloadTimer = setInterval(function(){
+                timeleft--;
+                io.to(d[0]).emit('voteendtimer', timeleft);
+                if(timeleft <= 0) {
+                    io.to(d[0]).emit('updateplayerlist', rooms[d[0]]['players']);
+                    console.log("updating player list")
+                    votesdone(d[0])
+                    clearInterval(downloadTimer);
+                }
+            },1000);
+
+            //io.emit('updateplayerlist', rooms[d[0]]['players']);
+            //console.log("updating player list")
+        }
     }
   }); 
     
@@ -427,30 +430,32 @@ io.on('connection', function(socket){
     if (rooms[d[0]].nvotes.indexOf(socket.nickname)<0) {
         rooms[d[0]].nvotes.push(socket.nickname)
         console.log("adding to nvotes")
+        //adding votes into mvotes
+        //console.log(rooms[room].n)
+        //console.log(rules.teamsize)
+        //console.log(rules.teamsize[String(rooms[room].n)])
+        //console.log(rooms[room].mission-1)
+
+        var mn=rules.teamsize[String(rooms[d[0]].n)][rooms[d[0]].mission-1] //number of players on the team for this mission
+        io.to(d[0]).emit('sendnumberofvotes', [mn, rooms[d[0]].nvotes.length]); //send to board
+        if (rooms[d[0]].nvotes.length==mn) { //when votes are in submit in 3 sec
+            //Timer implementation
+            var timeleft = 3;
+            var downloadTimer = setInterval(function(){
+                timeleft--;
+                io.to(d[0]).emit('voteendtimer', timeleft); //time left to board
+                if(timeleft == 0) {
+                    missiondone(d[0],0) //submit votes
+                    clearInterval(downloadTimer);
+                }
+            },1000);
+
+            //io.emit('updateplayerlist', rooms[d[0]]['players']);
+            //console.log("updating player list")
+        }
     } //adding socketnames into nvotes
-    rooms[d[0]].mvotes[rooms[d[0]].nvotes.indexOf(socket.nickname)]=d[1] //adding votes into mvotes
-    //console.log(rooms[room].n)
-    //console.log(rules.teamsize)
-    //console.log(rules.teamsize[String(rooms[room].n)])
-    //console.log(rooms[room].mission-1)
+    rooms[d[0]].mvotes[rooms[d[0]].nvotes.indexOf(socket.nickname)]=d[1] 
       
-    var mn=rules.teamsize[String(rooms[d[0]].n)][rooms[d[0]].mission-1] //number of players on the team for this mission
-    io.to(d[0]).emit('sendnumberofvotes', [mn, rooms[d[0]].nvotes.length]); //send to board
-    if (rooms[d[0]].nvotes.length==mn) { //when votes are in submit in 3 sec
-        //Timer implementation
-        var timeleft = 3;
-        var downloadTimer = setInterval(function(){
-            timeleft--;
-            io.to(d[0]).emit('voteendtimer', timeleft); //time left to board
-            if(timeleft <= 0) {
-                missiondone(d[0],0) //submit votes
-                clearInterval(downloadTimer);
-            }
-        },1000);
-        
-        //io.emit('updateplayerlist', rooms[d[0]]['players']);
-        //console.log("updating player list")
-    }
   }); 
   function missiondone(room,r){ //mission votes processor and responder
       var sabotages=rooms[room].mvotes.filter(function(it) {return it == 0;}).length //get number of fail votes (0s) 
@@ -470,25 +475,91 @@ io.on('connection', function(socket){
           io.to(room).emit("missionresult",1)
           console.log("raising mission")
       }
-      didanyonewin(room)
-      console.log("advancing mission")
-      rooms[room].mission=rooms[room].mission+1 //advance mission, change to implement pick your own mission variation 
-      io.sockets.in(room).emit("updatephase","idle") //mission over, restart
-      resetboard(room,1)
-      getleader(room)
+      if (didanyonewin(room,-1)==0){
+          var v=resetboard(room,1)
+          io.to(room).emit("console","victory")
+          io.to(room).emit("gameover",v)
+      }
+      else if (didanyonewin(room,-1)==1){
+          var v=resetboard(room,1)
+          io.to(room).emit("console","victory")
+          io.to(room).emit("gameover",v)
+      }
+      else if (didanyonewin(room,-1)==2){
+          io.to(room).emit("console","assassin")
+          io.to(room).emit("assassin",0)
+          assassin(room)
+      }
+      else {
+          console.log("advancing mission")
+          rooms[room].mission=rooms[room].mission+1 //advance mission, change to implement pick your own mission variation 
+          io.sockets.in(room).emit("updatephase","idle") //mission over, restart
+          resetboard(room,1)
+          getleader(room)
+      }
   }
 
-  function didanyonewin(room){
-      if (rooms[room].score.filter(function(it) {return it == 0;}).length==3){
-          io.sockets.in(room).emit("whowon", 0) //Evil wins, 3 to win
-          delete rooms[room]
+  function didanyonewin(room,r){
+      console.log(r)
+      if (rooms[room].score.filter(function(it) {return it == 0;}).length==3 || r==1){
+          //io.sockets.in(room).emit("whowon", 0) //Evil wins, 3 to win or merlin was assassinated
+          winlose(room, 0)
+          io.to(room).emit("console", "EVIL WINS")
+          var downloadTimer = setInterval(function(){
+                delete players[rooms[room].bid]
+                delete rooms[room]
+                clearInterval(downloadTimer);
+            },100000);
+          return 0
+          
       }
-      if (rooms[room].score.filter(function(it) {return it == 1;}).length==3){
-          io.sockets.in(room).emit("whowon", 1)//Implement Assassin here
-          delete rooms[room]
+      if (rooms[room].score.filter(function(it) {return it == 1;}).length==1 && r==-1){
+          //if good won 3 quests, Assassin
+          return 2
       }
+      if (rooms[room].score.filter(function(it) {return it == 1;}).length==1 && r==0){ //Good wins, 3 to win and merlin survives
+          winlose(room, 1)
+          io.to(room).emit("console", "Good WINS")
+          var downloadTimer = setInterval(function(){
+                delete players[rooms[room].bid]
+                delete rooms[room]
+                clearInterval(downloadTimer);
+           },100000);
+          return 1
+      }
+      return -1
   }
 
+  function winlose(room,r){ //update game end status to player consoles
+      rooms[room]
+      rplayers=rooms[room].players
+      if (r==0){
+          io.to(room).emit("victory",0)
+          for (p in rplayers) {
+              if (rules.characters[rplayers[p].char].loyalty == "b") {
+                 io.to(players[p].id).emit("updatephase","victory")
+                 io.to(players[p].id).emit("won", "b")
+              }
+              else {
+                io.to(players[p].id).emit("updatephase","defeat")
+                io.to(players[p].id).emit("lost", "g")
+              }
+          }
+      }
+      else {
+          io.to(room).emit("victory",1)
+          for (p in rplayers) {
+              if (rules.characters[rplayers[p].char].loyalty == "g") {
+                io.to(players[p].id).emit("updatephase","victory")
+                io.to(players[p].id).emit("won", "g")
+              }
+              else {
+                io.to(players[p].id).emit("updatephase","defeat")
+                io.to(players[p].id).emit("lost", "b")
+              }
+          }
+      }
+  }
     
   function resetboard(room, f) { 
     p=rooms[room].players
@@ -499,12 +570,55 @@ io.on('connection', function(socket){
     rooms[room].selplayers=[]
     rooms[room].nvotes=[]
     rooms[room].mvotes=[]
-    if(f){rooms[room].fvotes=[]}
+    if(f){rooms[room].fvotes=0}
     io.to(room).emit('updateplayerlist', rooms[room]['players']);
     io.to(room).emit('updateboard', [rooms[room].score,rooms[room].fvotes,rooms[room].phase,rooms[room].selplayers, rooms[room].sabotages] );
     //io.emit('selectedplayerstoboard', d[1]); //connect to board
   }
-    
+
+//ASSASSIN EVENTS
+
+  function assassin(room) {
+      io.sockets.in(room).emit("updatephase","idle")
+      rooms[room].phase="assassin"
+      var assassin=""
+      Object.keys(rooms[room].players).map(function(el){         
+        if(rooms[room].players[el].char=="Assassin") {
+            assassin=el
+        }
+      })
+      console.log(assassin)
+      console.log("assassin")
+      //bid=players[rooms[room].id].id
+      io.to(players[assassin].id).emit("updatephase", "assassin")
+      //io.to(room).emit("updatephaseboard", "leader")
+      io.to(room).emit('updateplayerlist', rooms[room]['players'])
+      io.to(room).emit('console', "assassin")
+      rooms[room].selplayers=[rooms[room].players[assassin].nickname]
+      io.to(room).emit('selectedplayerstoboard', [rooms[room].players[assassin].nickname]); 
+      io.to(room).emit("updatephaseboard", "assassin")//connect to board
+  }
+  
+  //socket.on('leaderready', function(room) {
+
+  //socket.on('selectedteam', function(d) {
+
+  socket.on('assassindone', function(d) {
+      //bid=players[rooms[d[0]].bid].id
+    var merlin=""
+    Object.keys(rooms[d[0]].players).map(function(el){         
+        if(rooms[d[0]].players[el].char=="Merlin") {
+            merlin=rooms[d[0]].players[el].nickname
+        }
+      })
+    console.log(merlin)
+    if(merlin==d[1]){
+        didanyonewin(d[0],1)
+    }
+    else{
+        didanyonewin(d[0],0)  
+    }
+  }); 
     
   //BOARD EVENTS  
   socket.on('startroom', function(data) {
