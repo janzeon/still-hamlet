@@ -24,7 +24,7 @@
         <div class="col-md-12">
           <form class="">
             <div class="form-group text-light"> <label>Join room</label>
-              <input type="number" name="room" class="form-control" placeholder="XXXX" ng-model="r"> </div>
+              <input type="number" pattern="\d*" name="room" class="form-control" placeholder="XXXX" ng-model="r"> </div>
             <div class="form-group text-light"> <label>Your name</label>
               <input type="name" name="name" class="form-control" placeholder="John Doe" ng-model="pname"> </div>
             <button ng-click="join()" class="btn w-100 text-left text-light btn-info">Join</button>

@@ -153,6 +153,7 @@ app.controller('Main', function($scope, bsocket,$http) {
     $scope.now={"phase":"", "selplayers":[]}
     
     $scope.join= function(){
+        bsocket.emit("startroom",$scope.room)
         $scope.score=[-1,-1,-1,-1,-1]
         $scope.sabotages=[-1,-1,-1,-1,-1]
         $scope.fvotes=0
