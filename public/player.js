@@ -2,19 +2,20 @@
 
 
 //assign a unique id to the user in a cookie that can be persistent
-        function generateHash(len) {
-          var symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-          var hash = '';
-          for (var i = 0; i < len; i++) {
-            var symIndex = Math.floor(Math.random() * symbols.length);
-            hash += symbols.charAt(symIndex);
-          }
-          return hash;
-        }
-        if (!/\buser_id=/.test(document.cookie)) { //if no 'user_id' in cookies
-          document.cookie = 'user_id=' + "pl"+generateHash(32);  //add cookie 'user_id'
-        }
-        console.log(document.cookie)
+function generateHash(len) {
+  var symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+  var hash = '';
+  for (var i = 0; i < len; i++) {
+    var symIndex = Math.floor(Math.random() * symbols.length);
+    hash += symbols.charAt(symIndex);
+  }
+  return hash;
+}
+if (!/\buser_id=pl/.test(document.cookie)) { //if no 'user_id' in cookies
+  document.cookie = 'user_id=' + "pl"+generateHash(32);  //add cookie 'user_id'
+}
+
+console.log(document.cookie)
 
 
 var app = angular.module('player', ['btford.socket-io','ui.router']);
@@ -29,6 +30,7 @@ app.controller('Main', function($scope, psocket, $state) {
     $scope.phase="idle"
     $scope.room=""
     psocket.on('startroom', function(room){
+        console.log("starting room" + room)
         $scope.room=room
     });
     psocket.on('console', function(msg){
@@ -79,6 +81,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
                     var data=[$scope.r, $scope.pname]
                     psocket.emit('join', data);
                     $scope.room=$scope.r //room=room
+                    console.log($scope.room)
                     $state.go('wait')
                 }
                 
@@ -90,6 +93,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
             templateUrl: 'playerviews/wait.html',
             controller: function($scope, psocket, $state) {
                 $scope.message="Waiting for players to join..."
+                console.log($scope.room)
                 psocket.on('startroom', function(room) {
                     console.log("Entering game")
                     console.log($scope.room)

@@ -131,7 +131,11 @@ app.controller('Main', function($scope, bsocket,$http) {
         bsocket.emit("startroom",data)
     }
     
-    //gotta fix everything below this comment
+    $scope.closeroom = function(){
+        bsocket.emit('closeroom', $scope.room)
+        location.reload();
+    }
+    
     
     $scope.players={}
     $scope.njoinedplayers = function(){return Object.keys($scope.players).length}
@@ -146,40 +150,19 @@ app.controller('Main', function($scope, bsocket,$http) {
     $scope.votesv=0
     $scope.votesn=0
     $scope.result=-1
+    $scope.phase=""
+    $scope.selplayers=[]
     
     
     $scope.expansions="None"
-    
-    $scope.now={"phase":"", "selplayers":[]}
-    
-    $scope.join= function(){
-        bsocket.emit("startroom",$scope.room)
-        $scope.score=[-1,-1,-1,-1,-1]
-        $scope.sabotages=[-1,-1,-1,-1,-1]
-        $scope.fvotes=0
-        $scope.leader=""
-        $scope.votest=-1
-        $scope.votesv=0
-        $scope.votesn=0
-        $scope.result=-1
-        $scope.players={}
-        $scope.started=false
-
-        $scope.expansions="None"
-
-        $scope.now={"phase":"", "selplayers":[]}
-        //window.location.reload(true)
         
+    $scope.join= function(){
+        bsocket.emit("playagain",$scope.room)
     }
     
     $http.get('/roomnumber')
       .then(function(result) {
         $scope.room = result.data;
-    });
-    
-    bsocket.on('startroom', function(room){
-        $scope.room=room
-        
     });
     
     bsocket.on('console', function(msg){
@@ -198,12 +181,12 @@ app.controller('Main', function($scope, bsocket,$http) {
     
     bsocket.on('updatephaseboard', function(phase){
         console.log("phase recieved")
-        $scope.now.phase=phase
+        $scope.phase=phase
     });
     
     bsocket.on('selectedplayerstoboard', function(players){
         console.log("players recieved")
-        $scope.now["selplayers"]=players
+        $scope.selplayers=players
     });
     
     bsocket.on('sendnumberofvotes', function(data) {
@@ -248,11 +231,9 @@ app.controller('Main', function($scope, bsocket,$http) {
     
     
     bsocket.on('updateboard', function(data){
-        $scope.score=data[0]
-        $scope.fvotes=data[1]
-        $scope.now.phase=data[2]
-        $scope.now.selplayers=data[3]
-        $scope.sabotages=data[4]
+        for(d in data){
+            $scope[d]=data[d]
+        }
     });
     
     bsocket.on('victory', function(r){
@@ -265,9 +246,9 @@ app.controller('Main', function($scope, bsocket,$http) {
     });
     
     
-    bsocket.on('refreshboard', function(data){
-        $scope.started=true
-    });
+    //bsocket.on('refreshboard', function(data){
+    //    $scope.started=true
+    //});
     //bsocket.on('sabotages', function(d){
     //  console.log(d)
     //    $scope.sabotages[d[1]]=new Array(d[0]); 

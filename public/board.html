@@ -178,23 +178,23 @@
                   <img id="gif" style="width: auto; height: 300px;" ng-src="{{resultgif}}">
               </div>
               <div class="row">
-                <div class="overlaymessage saira-800" ng-show="((now.phase=='vote' || now.phase=='mission') && votest>0)">{{votest}}</div>
+                <div class="overlaymessage saira-800" ng-show="((phase=='vote' || phase=='mission') && votest>0)">{{votest}}</div>
                   <div class="overlaymessage saira-800" ng-show="voteresult==1"><i class="fa fa-thumbs-up" style="color:#28B286" ></i></div>
                     <div class="overlaymessage saira-800" ng-show="voteresult==-1"><i class="fa fa-thumbs-down" style="color:#FF8A6C" ></i></div>
                 <div class="col-md-6 p-3">
-                  <h4 class="saira-400"><b><span style="font-weight: normal;"><b>{{phasetext[now.phase].title}}</b></span>
+                  <h4 class="saira-400"><b><span style="font-weight: normal;"><b>{{phasetext[phase].title}}</b></span>
                     </b>
                   </h4>
-                  <p class="saira-200" ng-show="now.phase=='leader'">Pick <span class="saira-800">{{pls}}</span> Avalonians for this quest.</p>
-                  <p class="saira-200" ng-show="now.phase=='vote'">Do you agree to send the following Avalonians on this quest?</p>
-                  <p class="saira-200" ng-show="now.phase=='mission'">May the Fates be in our favor... Farewell soldiers!</p>
-                  <p class="saira-200" ng-show="now.phase=='Assassin'">Evil has revealed itself, Merlin must be protected or all will be lost!</p>
-                  <h4 class="text-muted saira-200">{{now.selplayers.join(', ')}}</h4>
-                  <h4 class="text-muted saira-200" ng-show="(now.phase=='vote' || now.phase=='mission')">{{votesv}}/{{votesn}} votes in.</h4>
+                  <p class="saira-200" ng-show="phase=='leader'">Pick <span class="saira-800">{{pls}}</span> Avalonians for this quest.</p>
+                  <p class="saira-200" ng-show="phase=='vote'">Do you agree to send the following Avalonians on this quest?</p>
+                  <p class="saira-200" ng-show="phase=='mission'">May the Fates be in our favor... Farewell soldiers!</p>
+                  <p class="saira-200" ng-show="phase=='Assassin'">Evil has revealed itself, Merlin must be protected or all will be lost!</p>
+                  <h4 class="text-muted saira-200">{{selplayers.join(', ')}}</h4>
+                  <h4 class="text-muted saira-200" ng-show="(phase=='vote' || phase=='mission')">{{votesv}}/{{votesn}} votes in.</h4>
                   
                 </div>
                 <div class="col-md-6 ">
-                  <p class="p-y-1 text-left p-3 m-0 saira-200">{{phasetext[now.phase].message}}</p>
+                  <p class="p-y-1 text-left p-3 m-0 saira-200">{{phasetext[phase].message}}</p>
                 </div>
               </div>
             </div>
@@ -283,6 +283,30 @@
   <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+    <div ng-show="started"><button style="width: 100%;top: 50px; position: relative;" class="btn btn-danger text-light" type="button" data-toggle="modal" data-target="#closeroommodal">Close Room</button></div>
+    <!-- Button trigger modal -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="closeroommodal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="ModalLabel">Are you sure?</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Ending game with close the room and exit all players from the room.
+            Thank you for playing.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">No, t'was an accident.</button>
+            <button type="button" class="btn btn-primary" ng-click="closeroom()" >Yes, I want to end the game.</button>
+          </div>
+        </div>
+      </div>
+    </div>
 </body>
 
 </html>

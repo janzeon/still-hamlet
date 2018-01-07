@@ -122,7 +122,7 @@ app.get('/board', function(req, res, next) {
 });
 app.get('/roomnumber', function(req, res, next) {
   boardId=req.headers.cookie.match(/\buser_id=([a-zA-Z0-9]{32})/)[1]
-  res.json(players[boardId].room);  
+  res.json(Number(players[boardId].room));  
 });
 //app.post('/start', function(req, res, next) {
 //  var n=10 //get from request
@@ -141,71 +141,173 @@ io.on('connection', function(socket){
   var cookie = socket.handshake.headers.cookie;
   var match = cookie.match(/\buser_id=([a-zA-Z0-9]{32})/);  //parse cookie header
   var userId = match ? match[1] : null;
+  var sroom = ''
   socket.nickname=userId
   //console.log(userId)
     
+  //Register every UNIQUE player
+  if(!(userId in players)) {
+      players[userId]={"room":"", "id":socket.id}
+      io.emit('console', userId)
+  }
+  else {
+      sroom=players[userId].room
+      players[userId].id=socket.id // update socket id for known player 
+  }
+    
   //Room assignment - assigns a new number for each UNIQUE socket. yay recursion   
   function assignroom() {
-      room=Math.floor(Math.random()*9000) + 1000 //max number of simultaneous rooms = 9999
-      if(room in rooms) {
+      newroom=Math.floor(Math.random()*9000) + 1000 //max number of simultaneous rooms = 9999
+      if(newroom in rooms) {
           return assignroom()
       }
-      return room
+      return newroom
   }
-  //if(userId.startsWith("board") && (userId in players)) {
-  if((userId.startsWith("board") && !(userId in players))||(userId.startsWith("board") && (userId in players) && !rooms[players[userId].room].started)) {
-      var room=assignroom()
-      socket.join(String(room))//join room again
-      console.log(io.sockets.adapter.rooms[room].sockets);
-      players[userId]={"room":room,"id":socket.id} //register board in players variable.
-      console.log(players)
-      
-        //rooms[room]={"players":{"IDytwu67":{"nickname":"Janardhan", "selected":0, "vote":-1},"IDxtwub67":{"nickname":"Nick", "selected":0,  "vote":-1},"IDxytw67":{"nickname":"Mario", "selected":0,  "vote":-1},"IDxytub67":{"nickname":"Jana", "selected":0,  "vote":-1}},
-        rooms[room]={"players":{},
+    
+  //BOARD CONNECTIONS
+  //create new board
+  function newboard(r){
+      sroom=String(r) //get new room
+      socket.join(sroom)
+      players[socket.nickname].room=sroom
+      //rooms[sroom]={"players":{"IDytwu67":{"nickname":"Janardhan", "selected":0, "vote":-1},"IDxtwub67":{"nickname":"Nick", "selected":0,  "vote":-1},"IDxytw67":{"nickname":"Mario", "selected":0,  "vote":-1},"IDxytub67":{"nickname":"Jana", "selected":0,  "vote":-1}},
+        
+      rooms[sroom]={"players":{},
         "score":[-1,-1,-1,-1,-1],"sabotages":[-1,-1,-1,-1,-1],"characters":[], "n":-1,"fvotes":0,"nvotes":[],"mvotes":[],"leader":0,"mission":1,"phase":"leader","selplayers":[], "started":false, "bid":socket.nickname}
+  }
+  function playagain(){
+      rooms[sroom]={"players":rooms[sroom].players,
+        "score":[-1,-1,-1,-1,-1],"sabotages":[-1,-1,-1,-1,-1],"characters":[], "n":-1,"fvotes":0,"nvotes":[],"mvotes":[],"leader":rooms[sroom].leader+1,"mission":1,"phase":"leader","selplayers":[], "started":false, "bid":socket.nickname}
+      //keeo players and leader tracker. reinitialize everything else.
+      resetboard(sroom,0)
+      updateboard([
+          'score','sabotages',
+          'characters','n',
+          'leader','phase',
+          'selplayers','fvotes',
+          'mvotes','nvotes',
+          'players','started'], sroom)
+      io.to(sroom).emit('updateboard',{'result':-1})
+  }
+  
+  function updateboard(items, room){
+      var returnobj = {}
+      console.log(room)
+      console.log(items)
+      console.log(rooms)
+      console.log(rooms[room])
+      io.emit('console',room)
+      io.emit('console',items)
+      io.emit('console',rooms[room])
+      for(i in items){
+          io.emit('console',i)
+          console.log(i)
+          returnobj[items[i]]=rooms[room][items[i]]
+          io.emit('console',returnobj)
+      }
+      io.to(room).emit('updateboard',returnobj)
+      io.emit('console',returnobj)
       
+      return returnobj
   }
-  else if (userId.startsWith("board") && (userId in players) && rooms[players[userId].room].started) {
-      socket.join(String(players[userId].room))//join room again
-      players[socket.nickname]["id"]=socket.id
-      io.to(socket.id).emit('updateplayerlist', rooms[players[userId].room]['players'])
-      io.to(socket.id).emit('updateboard', [rooms[players[userId].room].score,rooms[players[userId].room].fvotes,rooms[players[userId].room].phase,rooms[players[userId].room].selplayers] );
-      io.to(socket.id).emit('refreshboard',1)
+    
+  //rejoin existing game
+  function rejoingame(){
+      socket.join(sroom)//join room again
+      updateboard([
+          'score',
+          'fvotes',
+          'phase',
+          'selplayers',
+          'fvotes',
+          'mvotes',
+          'nvotes',
+          'players',
+          'started'], sroom)
   }
-  else if (userId in players && players[userId].room) {
-      if(rooms[players[userId].room].started){
-          socket.join(String(room))//join room again
-          io.to(socket.id).emit("startroom", players[userId].room)
-          phase=rooms[players[userId].room].phase
-          players[socket.nickname]["id"]=socket.id
-          if(phase=="leader"){
-              if( rooms[players[userId].room].selplayers.indexOf(rooms[players[userId].room].players[userId].nickname)>=0) {
-                console.log(rooms[players[userId].room].players[userId].nickname)
-                  io.to(socket.id).emit("updatephase", "leader")
+  
+  if(userId.startsWith("board")) {
+      //if(!(userId in players)) { //i.e. board not in 'players'
+      //    io.emit('console','Board not in players, Creating new board')
+      //    newboard(assignroom())
+      //} //Commented because this case is already handled prior to this line
+      //else { // i.e. user is in 'players'
+      if (players[userId].room!=''){ //board is in a room 
+          io.emit('console','Board has a room assigned')
+          if (rooms[players[userId].room].started) { //room has started
+              //Old board and in game
+              io.emit('console','in room and started')
+              rejoingame()
+          }
+          else { //room assigned but has not started
+              //update player list and room
+              io.emit('console','in room but not started')
+              socket.join(sroom) 
+              io.to(sroom).emit('updateboard',{'players':rooms[sroom].players,'room':sroom})
+          }
+      }
+      else { //board not in room
+          io.emit('console','not in room, reassigning room and creating new')
+          newboard(assignroom())
+      }
+      //}
+  }
+  else if(userId.startsWith("pl")) {
+      if(userId in players) { //i.e. player in 'players'
+          if (players[userId].room!=''){ //player has room
+              sroom=players[userId].room
+              if (players[userId].room in rooms) { 
+                  if (rooms[players[userId].room].started) { //game started
+                      rejoinplayer() // join again
+                  }
+                  else { //game not started
+                      //refreshed while waiting for players to join.
+                      socket.join(String(sroom)) // join socket to room 
+                      io.to(socket.id).emit("startroom", players[userId].room)
+                      io.to(socket.id).emit("updatephase", "wait")
+                  }
               }
               else {
-                  io.to(socket.id).emit("updatephase", "idle")
+                  //do nothing, this should never be possible because players are evacuated from room at end of game 
+                  io.to(socket.id).emit("console", "Impossible: room already closed")
               }
           }
-          else if(phase=="vote"){
-              io.to(socket.id).emit("updatephase", "vote")
+          else {
+              io.to(socket.id).emit("console","Did nothing because OLD player trying to join new game")
           }
-          else if(phase=="mission"){
-              if( rooms[players[userId].room].selplayers.indexOf(rooms[players[userId].room].players[userId].nickname)>=0) {
-                  io.to(socket.id).emit("updatephase", "mission")
-              }
-              else {
-                  io.to(socket.id).emit("updatephase", "idle")
-              }
+      }
+      else {
+          io.to(socket.id).emit("console","Did nothing because NEW player trying to join new game")
+      }
+  }
+ 
+  function rejoinplayer() {
+      socket.join(String(sroom))//join socket to room 
+      io.to(socket.id).emit("startroom", players[userId].room)
+      phase=rooms[players[userId].room].phase
+      if(phase=="leader"){
+          if( rooms[players[userId].room].selplayers.indexOf(rooms[players[userId].room].players[userId].nickname)>=0) {
+            console.log(rooms[players[userId].room].players[userId].nickname)
+              io.to(socket.id).emit("updatephase", "leader")
+          }
+          else {
+              io.to(socket.id).emit("updatephase", "idle")
+          }
+      }
+      else if(phase=="vote"){
+          io.to(socket.id).emit("updatephase", "vote")
+      }
+      else if(phase=="mission"){
+          if( rooms[players[userId].room].selplayers.indexOf(rooms[players[userId].room].players[userId].nickname)>=0) {
+              io.to(socket.id).emit("updatephase", "mission")
+          }
+          else {
+              io.to(socket.id).emit("updatephase", "idle")
           }
       }
   }
   
-  //Register every UNIQUE player
-  if(!(userId in players)) {
-      players[userId]={"room":""}
-      io.emit('console', userId)
-  }
+  
 
     
   console.log('Yay, connection was recorded')
@@ -214,7 +316,9 @@ io.on('connection', function(socket){
   socket.on('join', function(data){
       io.emit("console",rooms)
       io.emit("console",players)
-      var room =data[0]
+      room =data[0]
+      console.log('joining room'+data[1])
+      console.log(room)
       var nickname =data[1]
       //console.log(!(room in rooms))
       if (!(room in rooms)) { 
@@ -229,21 +333,13 @@ io.on('connection', function(socket){
               delete rooms[String(otherroom)]['players'][socket.nickname]; //remove user from previous room
           }
           
-          players[socket.nickname]["room"]=room  //update room info for current player 
+          players[socket.nickname]["room"]=String(room)  //update room info for current player 
           players[socket.nickname]["id"]=socket.id  //update room info for current player 
           
           if(socket.nickname in rooms[String(room)]['players']) {
               rooms[String(room)]['players'][socket.nickname]["nickname"]=nickname}  
           else {
               rooms[String(room)]['players'][socket.nickname]={"nickname":nickname}}//register player (uid) into room object
-          //console.log(rooms[String(room)]['players'][socket.nickname])
-          //console.log(rooms[room].bid)
-          //console.log(players)
-          //bid=players[rooms[room].bid].id
-          //console.log(players[rooms[room].bid].id)
-          //console.log(players[rooms[room].bid])
-          //console.log(rooms[room].bid)
-          //io.to(bid).emit('updateplayerlist', rooms[String(room)]['players'])
           io.to(room).emit('updateplayerlist', rooms[String(room)]['players'])
 
           console.log("in" + room)
@@ -252,15 +348,10 @@ io.on('connection', function(socket){
       else {
           io.to(socket.id).emit('joinstatus', 300)
       }
+      io.emit("console",players)
       //console.log("All")
       //console.log(io.sockets.clients())
   });
-    
- // socket.on('nickname', function(msg){
- //   players[userId]["nickname"]=msg     //update username info for current player
-//    io.emit('console', "New user joined - "+msg);
-//    console.log(players)
-//  });
     
   function getplayernames(room) {
       var players={}
@@ -274,8 +365,15 @@ io.on('connection', function(socket){
   //LEADER EVENTS
 
   function getleader(room) {
+      console.log('getting leader')
+      console.log(room)
+      console.log(rooms[room])
+      console.log(players)
+      
       rooms[room].phase="leader"
       var leader=Object.keys(rooms[room].players)[rooms[room].leader]
+      console.log(leader)
+      
       rooms[room].leader=rooms[room].leader+1
       if (rooms[room].leader>Object.keys(rooms[room].players).length-1) {
           rooms[room].leader=0
@@ -290,15 +388,15 @@ io.on('connection', function(socket){
   }
   
     
-  socket.on('leaderready', function(room) {
+  socket.on('leaderready', function(r) {
       //bid=players[rooms[room].bid].id
-    console.log(room)
-      console.log("mission "+rooms[room].mission)
+    console.log(r)
+    console.log("mission "+rooms[r].mission)
     
-    data = {"players":getplayernames(room),"teamsize":rules.teamsize[String(rooms[room].n)][rooms[room].mission-1]}
+    data = {"players":getplayernames(r),"teamsize":rules.teamsize[String(rooms[r].n)][rooms[r].mission-1]}
     console.log(data)
     io.to(socket.id).emit('leaderdata', data);
-    io.to(room).emit('leaderdataboard', data.teamsize);
+    io.to(r).emit('leaderdataboard', data.teamsize);
   });  
   
 
@@ -505,34 +603,43 @@ io.on('connection', function(socket){
           //io.sockets.in(room).emit("whowon", 0) //Evil wins, 3 to win or merlin was assassinated
           winlose(room, 0)
           io.to(room).emit("console", "EVIL WINS")
-          var downloadTimer = setInterval(function(){
-                delete players[rooms[room].bid]
-                delete rooms[room]
-                clearInterval(downloadTimer);
-            },100000);
+          rooms[room].phase="gameended"
           return 0
           
       }
-      if (rooms[room].score.filter(function(it) {return it == 1;}).length==1 && r==-1){
+      if (rooms[room].score.filter(function(it) {return it == 1;}).length==3 && r==-1){
           //if good won 3 quests, Assassin
           return 2
       }
-      if (rooms[room].score.filter(function(it) {return it == 1;}).length==1 && r==0){ //Good wins, 3 to win and merlin survives
+      if (rooms[room].score.filter(function(it) {return it == 1;}).length==3 && r==0){ //Good wins, 3 to win and merlin survives
           winlose(room, 1)
           io.to(room).emit("console", "Good WINS")
-          var downloadTimer = setInterval(function(){
-                delete players[rooms[room].bid]
-                delete rooms[room]
-                clearInterval(downloadTimer);
-           },100000);
+          rooms[room].phase="gameended"
           return 1
       }
       return -1
   }
 
+  function closeroom(room){
+      console.log(rooms[room])
+      console.log(players)
+      players[rooms[room].bid].room = ''
+      for (p in rooms[room].players) {
+          console.log(p)
+          players[p].room=''
+      }
+      io.to(room).emit("updatephase","join")
+      console.log('closing room'+room)
+      io.to(room).emit("console","closing room")
+      sroom=''
+      delete rooms[room]
+  }
+    
   socket.on('closeroom', function(room) {
-    delete players[rooms[room].bid]
-    delete rooms[room]
+      closeroom(room)
+  })
+  socket.on('playagain', function(room) {
+      playagain()
   })
     
   function winlose(room,r){ //update game end status to player consoles
@@ -566,6 +673,7 @@ io.on('connection', function(socket){
       }
   }
     
+    
   function resetboard(room, f) { 
     p=rooms[room].players
     Object.keys(p).map(function(el){  
@@ -577,7 +685,17 @@ io.on('connection', function(socket){
     rooms[room].mvotes=[]
     if(f){rooms[room].fvotes=0}
     io.to(room).emit('updateplayerlist', rooms[room]['players']);
-    io.to(room).emit('updateboard', [rooms[room].score,rooms[room].fvotes,rooms[room].phase,rooms[room].selplayers, rooms[room].sabotages] );
+    updateboard([
+          'score',
+          'fvotes',
+          'phase',
+          'selplayers',
+          'fvotes',
+          'mvotes',
+          'nvotes',
+          'players',
+          'selplayers',
+          'sabotages'], room)
     //io.emit('selectedplayerstoboard', d[1]); //connect to board
   }
 
@@ -625,33 +743,18 @@ io.on('connection', function(socket){
     }
   }); 
     
-  //BOARD EVENTS  
+  //GAME START EVENTS  
   socket.on('startroom', function(data) {
-    //console.log(io.sockets.connected)
-    
-    
     var room=data.room
+    console.log("starting game in room " + room)
     console.log(data)
     rooms[room]["n"]=data.nplayers
     rooms[room]["started"]=true
     rooms[room]["characters"]=data.chars
     rooms[room]["players"]=assignroles(rooms[room]["characters"], rooms[room]["players"])
     intelrules(room) //generate intel for these characters
-
-
     io.sockets.in(room).emit('startroom', room);
     getleader(room)
-    //for (var key in players) {
-       // if (players.hasOwnProperty(key)) {
-         //   socketid=players[key].sid
-           // io.to(socketid).emit('console', "Heres"+key);
-    //    }
-    // }
-    //data = "score":[-1,-1,-1,-1,-1],"characters":[], "n":-1,"fvotes":0,"leader":"","mission":1,"phase":"leader","selplayers":[], "started":false}
-      
-    //console.log("Start rooms")
-    //console.log(rooms[room].players["IDytwu67"])
-    //console.log("End rooms")
   });  
     
     
@@ -675,16 +778,15 @@ io.on('connection', function(socket){
     io.to(socket.id).emit('intel', {"character":character,"intel":intel})
   });
     
-  //Fix all below
-  socket.on('missonstat', function(msg){
-    io.emit('console', msg);
-  });
-  
-    
-  socket.on('leaveroom', function() {
-    room=players[socket.nickname]["room"]
-    socket.leave(room);
-    io.emit('console', 'socket '+socket.id+' disconnected from '+ room);
+  socket.on('disconnect', function() { 
+    console.log("disconnected")
+    console.log(socket.id)
+    if(socket.nickname.startsWith('board') && sroom!=''){
+        if(rooms[sroom].phase=="gameended" && socket.id==players[rooms[sroom].bid].id){
+            closeroom(sroom)
+            console.log('closing room'+sroom)
+        }
+    }
   });
     
 });
