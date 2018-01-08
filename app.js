@@ -177,7 +177,7 @@ io.on('connection', function(socket){
   }
   function playagain(){
       rooms[sroom]={"players":rooms[sroom].players,
-        "score":[-1,-1,-1,-1,-1],"sabotages":[-1,-1,-1,-1,-1],"characters":[], "n":-1,"fvotes":0,"nvotes":[],"mvotes":[],"leader":rooms[sroom].leader+1,"mission":1,"phase":"leader","selplayers":[], "started":false, "bid":socket.nickname}
+        "score":[-1,-1,-1,-1,-1],"sabotages":[-1,-1,-1,-1,-1],"characters":[], "n":-1,"fvotes":0,"nvotes":[],"mvotes":[],"leader":rooms[sroom].leader,"mission":1,"phase":"leader","selplayers":[], "started":false, "bid":socket.nickname}
       //keeo players and leader tracker. reinitialize everything else.
       resetboard(sroom,0)
       updateboard([
@@ -299,6 +299,7 @@ io.on('connection', function(socket){
       }
       else if(phase=="mission"){
           if( rooms[players[userId].room].selplayers.indexOf(rooms[players[userId].room].players[userId].nickname)>=0) {
+              io.to(socket.id).emit("loyalty", rules.characters[rooms[sroom].players[userId].char].loyalty)
               io.to(socket.id).emit("updatephase", "mission")
           }
           else {
@@ -485,6 +486,7 @@ io.on('connection', function(socket){
                     io.to(room).emit("updatephase","idle")
                       for (nickname in rooms[room].players){
                            if (rooms[room].players[nickname].selected==1){
+                               io.to(players[nickname].id).emit("loyalty", rules.characters[rooms[room].players[nickname].char].loyalty)
                                io.to(players[nickname].id).emit("updatephase","mission")
                            }
                       }
@@ -586,6 +588,7 @@ io.on('connection', function(socket){
       else if (didanyonewin(room,-1)==2){
           io.to(room).emit("console","assassin")
           io.to(room).emit("assassin",0)
+          resetboard(room,1)
           assassin(room)
       }
       else {
@@ -764,7 +767,7 @@ io.on('connection', function(socket){
   
   socket.on('getintel', function(room) {
     character = rooms[room].players[socket.nickname].char
-    intel=[]
+    var intel=[]
     if (character == "Merlin" || character == "Percival") {
         intel=rooms[room].intel[character]
     }
@@ -772,10 +775,12 @@ io.on('connection', function(socket){
         intel=""
     }
     else if (character == "Mordred" || character == "Morgana" || character == "Assassin" || character == "Minion") {
-        intel=rooms[room].intel["Evil"]
+        var i=rooms[room].intel["Evil"] //for some reason if i dont create a new variable, it seems that the splice functon applied to rooms[room].intel, wierd. 
+        intel=i.splice(intel.indexOf(rooms[room].players[socket.nickname].nickname),1) //remove the players name from list
+        console.log(intel)
     }
     
-    io.to(socket.id).emit('intel', {"character":character,"intel":intel})
+    io.to(socket.id).emit('intel', {"character":character,"intel":intel,"loyalty":rules.characters[character].loyalty})
   });
     
   socket.on('disconnect', function() { 

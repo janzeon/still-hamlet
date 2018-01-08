@@ -29,12 +29,16 @@ app.factory('psocket', function (socketFactory) {
 app.controller('Main', function($scope, psocket, $state) {
     $scope.phase="idle"
     $scope.room=""
+    $scope.loyalty=""
     psocket.on('startroom', function(room){
         console.log("starting room" + room)
         $scope.room=room
     });
     psocket.on('console', function(msg){
         console.log(msg)
+    });
+    psocket.on('loyalty', function(data){
+        $scope.loyalty=data
     });
     psocket.on('updatephase', function(phase){
         console.log(phase)
@@ -121,6 +125,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
                     console.log(data)
                     $scope.char=data.character
                     $scope.intel=data.intel
+                    $scope.loyalty=data.loyalty
                 });
             }   
         })
@@ -151,6 +156,9 @@ app.config(function($stateProvider, $urlRouterProvider) {
                             $scope.selected.shift()
                         } 
                         $scope.selected.push(p)
+                    }
+                    else {
+                        $scope.selected.splice($scope.selected.indexOf(p),1)
                     }
                     psocket.emit("selectedteam",[$scope.room, $scope.selected]);
                 }
@@ -214,7 +222,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
         })
     
         .state('victory', {
-            url: '/v',
+            //url: '/v',
             templateUrl: 'playerviews/victory.html',
             controller: function($scope, psocket, $state) {
                 psocket.on('won', function(l) {
@@ -229,7 +237,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
             }
         })
         .state('defeat', {
-            url: '/d',
+            //url: '/d',
             templateUrl: 'playerviews/defeat.html',
             controller: function($scope, psocket, $state) {
                 psocket.on('lost', function(l) {
