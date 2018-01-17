@@ -169,7 +169,7 @@ app.controller('Main', function($scope, bsocket,$http) {
     $scope.join= function(){
         bsocket.emit("playagain",$scope.room)
     }
-    $http.post( "http://127.0.0.1:3000/roomnumber", { 'aid' : window.localStorage.getItem("aid")} )
+    $http.post( "/roomnumber", { 'aid' : window.localStorage.getItem("aid")} )
     .then(function(result) {
         $scope.room = result.data;
     });
