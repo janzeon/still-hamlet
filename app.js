@@ -826,12 +826,12 @@ io.on('connection', function(socket){
   socket.on('disconnect', function() { 
     console.log("disconnected")
     console.log(socket.id)
-    //if(socket.nickname.startsWith('board') && sroom!=''){
-    //    if(rooms[sroom].phase=="gameended" && socket.id==players[rooms[sroom].bid].id){
-    //        closeroom(sroom)
-    //        console.log('closing room'+sroom)
-    //    }
-    //}
+    if(socket.nickname.startsWith('board') && players[socket.nickname].room!=''){
+        if(rooms[players[socket.nickname].room].phase=="gameended" && socket.id==players[rooms[players[socket.nickname].room].bid].id){
+            closeroom(players[socket.nickname].room)
+            console.log('closing room'+players[socket.nickname].room)
+        }
+    }
   });
     
 });
