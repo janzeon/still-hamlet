@@ -27,7 +27,7 @@ app.factory('psocket', function (socketFactory) {
   });
 })
 
-app.controller('Main', function($scope, psocket, $state) 
+app.controller('Main', function($scope, psocket, $state) {
     psocket.on('connect', function() {
         psocket.emit('registerPlayer', window.localStorage.getItem("aid")) //send avalonId
     });
