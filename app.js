@@ -13,6 +13,12 @@ var io = require('socket.io')(server);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
+var allowCrossDomain = function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
+    next();
+}
 //app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
@@ -26,6 +32,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(allowCrossDomain);
 
 var players={}
 //playeruid(fromcookie):{sid:"socketid",room:"",nickname:"",}
@@ -120,9 +127,14 @@ app.get('/player', function(req, res, next) {
 app.get('/board', function(req, res, next) {
   res.sendfile('public/board.html');  
 });
-app.get('/roomnumber', function(req, res, next) {
-  boardId=req.headers.cookie.match(/\buser_id=([a-zA-Z0-9]{32})/)[1]
+app.post('/roomnumber', function(req, res, next) {
+  boardId=req.body.aid
   res.json(Number(players[boardId].room));  
+});
+app.post('/uid', function(req, res, next) {
+  console.log("aid recieved")
+  console.log(req.body.aid)
+  players[req.body.aid]={"room":"", "id":''}
 });
 //app.post('/start', function(req, res, next) {
 //  var n=10 //get from request
@@ -138,22 +150,98 @@ app.get('/roomnumber', function(req, res, next) {
 //SOCKET!
 io.on('connection', function(socket){
   //extracts unique user id from cookie
-  var cookie = socket.handshake.headers.cookie;
-  var match = cookie.match(/\buser_id=([a-zA-Z0-9]{32})/);  //parse cookie header
-  var userId = match ? match[1] : null;
-  var sroom = ''
-  socket.nickname=userId
+  console.log("connected")
+  //var cookie = socket.handshake.headers.cookie;
+  //var match = cookie.match(/\buser_id=([a-zA-Z0-9]{32})/);  //parse cookie header
+  //var userId = match ? match[1] : null;
+  console.log(players)
+  console.log(socket.id)
+    
+  socket.on('registerPlayer', function(userId){
+      socket.nickname=userId //reassign socket name to userId
+      if(userId in players) { //i.e. userId already in 'players' - refreshed, so need to restore to last state.
+          if (players[userId].room!=''){ //player has room
+              players[userId].id=socket.id //update socket id in records because it changes on refresh
+              if (players[userId].room in rooms) { 
+                  if (rooms[players[userId].room].started) { //game started
+                      rejoinplayer(players[userId].room) // join again
+                  }
+                  else { //game not started
+                      //refreshed while waiting for players to join.
+                      socket.join(String(players[userId].room)) // join socket to room 
+                      io.to(socket.id).emit("startroom", players[userId].room)
+                      io.to(socket.id).emit("updatephase", "wait")
+                  }
+              }
+              else {
+                  //do nothing, this should never be possible because players are evacuated from room at end of game 
+                  io.to(socket.id).emit("console", "Impossible: room already closed")
+              }
+          }
+          else {
+              players[userId].id=socket.id //update socket id in records
+              io.to(socket.id).emit("console","Did nothing because OLD player trying to join new game")
+          }
+      }
+      else { //userId NOT in 'players'
+          io.to(socket.id).emit("console","NEW player trying to join new game")
+          players[userId]={"room":"", "id":socket.id} //register user in 'players'
+          io.emit('console', userId)
+      }
+  })
+            
+  socket.on('registerBoard', function(userId){
+      socket.nickname=userId //reassign socket name to userId
+      if(!(userId in players)) { //i.e. board not in 'players'
+          io.emit('console','Board not in players, Creating new board')
+          players[userId]={"room":"", "id":socket.id}
+          newboard(assignroom())
+      }
+      else { // i.e. user is in 'players'
+          players[userId].id=socket.id
+          if (players[userId].room!=''){ //board is in a room 
+              var room=players[userId].room
+              io.emit('console','Board has a room assigned')
+              if (rooms[room].started) { //room has started
+                  //Old board and in game
+                  io.emit('console','in room and started')
+                  rejoingame(room)
+              }
+              else { //room assigned but has not started
+                  //update player list and room
+                  io.emit('console','in room but not started')
+                  socket.join(room) 
+                  io.to(room).emit('updateboard',{'players':rooms[room].players,'room':room})
+              }
+          }
+          else { //board not in room
+              io.emit('console','not in room, reassigning room and creating new')
+              newboard(assignroom())
+          }
+      }
+  })
+            
+  
+  
   //console.log(userId)
     
   //Register every UNIQUE player
-  if(!(userId in players)) {
-      players[userId]={"room":"", "id":socket.id}
-      io.emit('console', userId)
-  }
-  else {
-      sroom=players[userId].room
-      players[userId].id=socket.id // update socket id for known player 
-  }
+  
+    
+    
+    
+    //if(userId.startsWith("board")) {
+      //if(!(userId in players)) { //i.e. board not in 'players'
+      //    io.emit('console','Board not in players, Creating new board')
+      //    newboard(assignroom())
+      //} //Commented because this case is already handled prior to this line
+      //else { // i.e. user is in 'players'
+      
+      //}
+  //}
+  //else if(userId.startsWith("pl")) {
+      
+  //}
     
   //Room assignment - assigns a new number for each UNIQUE socket. yay recursion   
   function assignroom() {
@@ -163,10 +251,14 @@ io.on('connection', function(socket){
       }
       return newroom
   }
+  
+    
+    
+    
     
   //BOARD CONNECTIONS
   //create new board
-  function newboard(r){
+  function newboard(r){ //newboard(r=assignroom()) 
       sroom=String(r) //get new room
       socket.join(sroom)
       players[socket.nickname].room=sroom
@@ -212,8 +304,8 @@ io.on('connection', function(socket){
   }
     
   //rejoin existing game
-  function rejoingame(){
-      socket.join(sroom)//join room again
+  function rejoingame(room){
+      socket.join(room)//join room again
       updateboard([
           'score',
           'fvotes',
@@ -223,71 +315,19 @@ io.on('connection', function(socket){
           'mvotes',
           'nvotes',
           'players',
-          'started'], sroom)
+          'started'], room)
   }
   
-  if(userId.startsWith("board")) {
-      //if(!(userId in players)) { //i.e. board not in 'players'
-      //    io.emit('console','Board not in players, Creating new board')
-      //    newboard(assignroom())
-      //} //Commented because this case is already handled prior to this line
-      //else { // i.e. user is in 'players'
-      if (players[userId].room!=''){ //board is in a room 
-          io.emit('console','Board has a room assigned')
-          if (rooms[players[userId].room].started) { //room has started
-              //Old board and in game
-              io.emit('console','in room and started')
-              rejoingame()
-          }
-          else { //room assigned but has not started
-              //update player list and room
-              io.emit('console','in room but not started')
-              socket.join(sroom) 
-              io.to(sroom).emit('updateboard',{'players':rooms[sroom].players,'room':sroom})
-          }
-      }
-      else { //board not in room
-          io.emit('console','not in room, reassigning room and creating new')
-          newboard(assignroom())
-      }
-      //}
-  }
-  else if(userId.startsWith("pl")) {
-      if(userId in players) { //i.e. player in 'players'
-          if (players[userId].room!=''){ //player has room
-              sroom=players[userId].room
-              if (players[userId].room in rooms) { 
-                  if (rooms[players[userId].room].started) { //game started
-                      rejoinplayer() // join again
-                  }
-                  else { //game not started
-                      //refreshed while waiting for players to join.
-                      socket.join(String(sroom)) // join socket to room 
-                      io.to(socket.id).emit("startroom", players[userId].room)
-                      io.to(socket.id).emit("updatephase", "wait")
-                  }
-              }
-              else {
-                  //do nothing, this should never be possible because players are evacuated from room at end of game 
-                  io.to(socket.id).emit("console", "Impossible: room already closed")
-              }
-          }
-          else {
-              io.to(socket.id).emit("console","Did nothing because OLD player trying to join new game")
-          }
-      }
-      else {
-          io.to(socket.id).emit("console","Did nothing because NEW player trying to join new game")
-      }
-  }
+  
  
-  function rejoinplayer() {
-      socket.join(String(sroom))//join socket to room 
-      io.to(socket.id).emit("startroom", players[userId].room)
-      phase=rooms[players[userId].room].phase
+  function rejoinplayer(room) {
+      socket.join(String(room))//join socket to room 
+      var userId = socket.nickname
+      io.to(socket.id).emit("startroom", room)
+      phase=rooms[room].phase
       if(phase=="leader"){
-          if( rooms[players[userId].room].selplayers.indexOf(rooms[players[userId].room].players[userId].nickname)>=0) {
-            console.log(rooms[players[userId].room].players[userId].nickname)
+          if( rooms[room].selplayers.indexOf(rooms[room].players[userId].nickname)>=0) {
+            console.log(rooms[room].players[userId].nickname)
               io.to(socket.id).emit("updatephase", "leader")
           }
           else {
@@ -298,8 +338,8 @@ io.on('connection', function(socket){
           io.to(socket.id).emit("updatephase", "vote")
       }
       else if(phase=="mission"){
-          if( rooms[players[userId].room].selplayers.indexOf(rooms[players[userId].room].players[userId].nickname)>=0) {
-              io.to(socket.id).emit("loyalty", rules.characters[rooms[sroom].players[userId].char].loyalty)
+          if( rooms[room].selplayers.indexOf(rooms[room].players[userId].nickname)>=0) {
+              io.to(socket.id).emit("loyalty", rules.characters[rooms[room].players[userId].char].loyalty)
               io.to(socket.id).emit("updatephase", "mission")
           }
           else {
@@ -351,7 +391,7 @@ io.on('connection', function(socket){
       }
       io.emit("console",players)
       //console.log("All")
-      //console.log(io.sockets.clients())
+      console.log(io.sockets.clients())
   });
     
   function getplayernames(room) {
@@ -786,12 +826,12 @@ io.on('connection', function(socket){
   socket.on('disconnect', function() { 
     console.log("disconnected")
     console.log(socket.id)
-    if(socket.nickname.startsWith('board') && sroom!=''){
-        if(rooms[sroom].phase=="gameended" && socket.id==players[rooms[sroom].bid].id){
-            closeroom(sroom)
-            console.log('closing room'+sroom)
-        }
-    }
+    //if(socket.nickname.startsWith('board') && sroom!=''){
+    //    if(rooms[sroom].phase=="gameended" && socket.id==players[rooms[sroom].bid].id){
+    //        closeroom(sroom)
+    //        console.log('closing room'+sroom)
+    //    }
+    //}
   });
     
 });

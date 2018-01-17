@@ -13,9 +13,14 @@ function generateHash(len) {
   return hash;
 }
 
-if (!/\buser_id=/.test(document.cookie) || !document.cookie.includes("board")) { //if no 'user_id' in cookies
-  document.cookie = 'user_id=' + 'board'+generateHash(32);  //add cookie 'user_id'
+window.localStorage.setItem("aclient", "board") //set avalon client type to player
+if (!window.localStorage.getItem("aid")) { //if no avalonId in storage, create one
+  window.localStorage.setItem("aid", "board"+generateHash(32)) 
 }
+
+//if (!/\buser_id=/.test(document.cookie) || !document.cookie.includes("board")) { //if no 'user_id' in cookies
+//  document.cookie = 'user_id=' + 'board'+generateHash(32);  //add cookie 'user_id'
+//}
 console.log(document.cookie)
 
 
@@ -30,6 +35,11 @@ app.factory('bsocket', function (socketFactory) {
 })
 
 app.controller('Main', function($scope, bsocket,$http) {
+    
+    bsocket.on('connect', function() {
+        bsocket.emit('registerBoard', window.localStorage.getItem("aid")) //send avalonId
+    });
+    
     //{"IDxytwub67":{"name":"Jana", "leader":0, "selected":0, "mission":0, "vote":0}}
     //It is a time for great decisions and strong leaders. Not all knights and ladies of Avalon are loyal to Arthur, and yet you must choose only those that are Good to represent him in his quests. If an open ear and eye is kept, Merlin's sage advice can be discerned as whispers of truth. 
     $scope.phasetext={
@@ -159,11 +169,11 @@ app.controller('Main', function($scope, bsocket,$http) {
     $scope.join= function(){
         bsocket.emit("playagain",$scope.room)
     }
-    
-    $http.get('/roomnumber')
-      .then(function(result) {
+    $http.post( "http://127.0.0.1:3000/roomnumber", { 'aid' : window.localStorage.getItem("aid")} )
+    .then(function(result) {
         $scope.room = result.data;
     });
+      
     
     bsocket.on('console', function(msg){
         console.log(msg)
