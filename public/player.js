@@ -11,8 +11,9 @@ function generateHash(len) {
   }
   return hash;
 }
-if (!/\buser_id=pl/.test(document.cookie)) { //if no 'user_id' in cookies
-  document.cookie = 'user_id=' + "pl"+generateHash(32);  //add cookie 'user_id'
+window.localStorage.setItem("aclient", "player") //set avalon client type to player
+if (!window.localStorage.getItem("aid")) { //if no avalonId in storage, create one
+  window.localStorage.setItem("aid", "pl"+generateHash(32)) 
 }
 
 console.log(document.cookie)
@@ -26,7 +27,11 @@ app.factory('psocket', function (socketFactory) {
   });
 })
 
-app.controller('Main', function($scope, psocket, $state) {
+app.controller('Main', function($scope, psocket, $state) 
+    psocket.on('connect', function() {
+        psocket.emit('registerPlayer', window.localStorage.getItem("aid")) //send avalonId
+    });
+               
     $scope.phase="idle"
     $scope.room=""
     $scope.loyalty=""
