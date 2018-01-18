@@ -826,6 +826,8 @@ io.on('connection', function(socket){
   socket.on('disconnect', function() { 
     console.log("disconnected")
     console.log(socket.id)
+    console.log(players)
+    console.log(socket.nickname)
     if(socket.nickname.startsWith('board') && players[socket.nickname].room!=''){
         if(rooms[players[socket.nickname].room].phase=="gameended" && socket.id==players[rooms[players[socket.nickname].room].bid].id){
             closeroom(players[socket.nickname].room)
